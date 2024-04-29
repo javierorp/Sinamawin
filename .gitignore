@@ -12,3 +12,4 @@ venv
 logos
 *.drawio*
 *test*
+*.log

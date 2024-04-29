@@ -2,6 +2,7 @@
 
 import ctypes
 import tkinter as tk
+import traceback
 import webbrowser
 import ttkbootstrap as ttk
 from ttkbootstrap.toast import ToastNotification
@@ -232,120 +233,135 @@ def refresh() -> None:
 
 
 if __name__ == "__main__":
-    # Get network adapter info
-    net_adapters = NetworkAdapters().get_info()
-
-    # To know if the application has been launched as administrator.
     try:
-        if ctypes.windll.shell32.IsUserAnAdmin():
-            ADMIN = True
-    except:  # pylint: disable=bare-except # noqa
-        pass
+        # Get network adapter info
+        net_adapters = NetworkAdapters().get_info()
 
-    # Assign an ID to display the icon in the taskbar on Windows
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("Sinamawin")
+        # To know if the application has been launched as administrator.
+        try:
+            if ctypes.windll.shell32.IsUserAnAdmin():
+                ADMIN = True
+        except:  # pylint: disable=bare-except # noqa
+            pass
 
-    WIDTH, HEIGHT = get_window_size()
-    ADJ_HEIGHT = 1.06 if ADMIN else 1.11
+        # Assign an ID to display the icon in the taskbar on Windows
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            "Sinamawin")
 
-    app = ttk.Window(title="Sinamawin" + (" [Admin]" if ADMIN else ""),
-                     themename="litera",
-                     size=(int(WIDTH*1.025), int(HEIGHT*ADJ_HEIGHT)))
-    app.resizable(False, False)
+        WIDTH, HEIGHT = get_window_size()
+        ADJ_HEIGHT = 1.06 if ADMIN else 1.11
 
-    # App icon in all windows
-    app.iconbitmap(ICON)  # Set the bitmap for this window only
-    app.iconbitmap(default=ICON)  # Set the default bitmap (.ico)
-    app.iconbitmap(default='')  # Remove the default bitmap
+        app = ttk.Window(title="Sinamawin" + (" [Admin]" if ADMIN else ""),
+                         themename="litera",
+                         size=(int(WIDTH*1.025), int(HEIGHT*ADJ_HEIGHT)))
+        app.resizable(False, False)
 
-    # Menu bar
-    menubar = tk.Menu(app)
-    app.config(menu=menubar)
+        # App icon in all windows
+        app.iconbitmap(ICON)  # Set the bitmap for this window only
+        app.iconbitmap(default=ICON)  # Set the default bitmap (.ico)
+        app.iconbitmap(default='')  # Remove the default bitmap
 
-    filemenu = tk.Menu(menubar)
-    editmenu = tk.Menu(menubar)
-    helpmenu = tk.Menu(menubar)
+        # Menu bar
+        menubar = tk.Menu(app)
+        app.config(menu=menubar)
 
-    menubar.add_cascade(label="File", menu=filemenu)
-    menubar.add_cascade(label="Help", menu=helpmenu)
+        filemenu = tk.Menu(menubar)
+        editmenu = tk.Menu(menubar)
+        helpmenu = tk.Menu(menubar)
 
-    # File menu
-    filemenu.add_command(label="Refresh", command=refresh,
-                         accelerator="Ctrl+R")
-    filemenu.add_separator()
-    filemenu.add_command(label="Exit", command=app.quit)
+        menubar.add_cascade(label="File", menu=filemenu)
+        menubar.add_cascade(label="Help", menu=helpmenu)
 
-    # Help menu
-    helpmenu.add_command(label="About", command=about_popup)
-    helpmenu.add_command(label="Releases", command=lambda: webbrowser.open(
-        "https://github.com/javierorp/Sinamawin/releases"))
+        # File menu
+        filemenu.add_command(label="Refresh", command=refresh,
+                             accelerator="Ctrl+R")
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=app.quit)
 
-    # Config menu
-    app.config(menu=menubar)
-    app.bind_all("<Control-r>", lambda event: refresh())
+        # Help menu
+        helpmenu.add_command(label="About", command=about_popup)
+        helpmenu.add_command(label="Releases", command=lambda: webbrowser.open(
+            "https://github.com/javierorp/Sinamawin/releases"))
 
-    # Main frame
-    MAIN_FRAME = ttk.Frame(app, style='Frame.TFrame')
-    MAIN_FRAME.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        # Config menu
+        app.config(menu=menubar)
+        app.bind_all("<Control-r>", lambda event: refresh())
 
-    CANVAS_ROW = 0
-    # Warning if not admin
-    if not ADMIN:
-        f_warning = ttk.Frame(MAIN_FRAME)
-        f_warning.grid(row=0, column=0, pady=5)
-        warning = Image.open("./resources/warning.png")
-        warning = warning.resize((16, 16))
-        warning = ImageTk.PhotoImage(warning)
-        l_warning = tk.Label(f_warning, image=warning)
-        l_warning.grid(row=0, column=0, padx=5)
+        # Main frame
+        MAIN_FRAME = ttk.Frame(app, style='Frame.TFrame')
+        MAIN_FRAME.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
 
-        l_admin = ttk.Label(
-            f_warning,
-            text=("To modify the network adapters, the application"
-                  " must be run as an administrator"),
-            font=("Arial", 8, "bold"))
-        l_admin.grid(row=0, column=1)
-        f_separator = ttk.Frame(
-            f_warning, relief='flat', height=2, bootstyle="warning")
-        f_separator.grid(row=1, column=0, columnspan=2,
-                         sticky="ew", padx=5, pady=5)
+        CANVAS_ROW = 0
+        # Warning if not admin
+        if not ADMIN:
+            f_warning = ttk.Frame(MAIN_FRAME)
+            f_warning.grid(row=0, column=0, pady=5)
+            warning = Image.open("./resources/warning.png")
+            warning = warning.resize((16, 16))
+            warning = ImageTk.PhotoImage(warning)
+            l_warning = tk.Label(f_warning, image=warning)
+            l_warning.grid(row=0, column=0, padx=5)
 
-        CANVAS_ROW = 1
+            l_admin = ttk.Label(
+                f_warning,
+                text=("To modify the network adapters, the application"
+                      " must be run as an administrator"),
+                font=("Arial", 8, "bold"))
+            l_admin.grid(row=0, column=1)
+            f_separator = ttk.Frame(
+                f_warning, relief='flat', height=2, bootstyle="warning")
+            f_separator.grid(row=1, column=0, columnspan=2,
+                             sticky="ew", padx=5, pady=5)
 
-    # Canvas to enable the displacement of network adapters
-    netadapters_canvas = tk.Canvas(
-        MAIN_FRAME, bg='blue', width=WIDTH, height=HEIGHT)
-    netadapters_canvas.grid(row=CANVAS_ROW, column=0, sticky="nsew")
+            CANVAS_ROW = 1
 
-    # Scroball for the canvas
-    scrollbar = ttk.Scrollbar(
-        MAIN_FRAME, orient="vertical",
-        bootstyle="primary-round",
-        command=netadapters_canvas.yview)
-    scrollbar.grid(row=CANVAS_ROW, column=1, sticky="ns")
+        # Canvas to enable the displacement of network adapters
+        netadapters_canvas = tk.Canvas(
+            MAIN_FRAME, bg='blue', width=WIDTH, height=HEIGHT)
+        netadapters_canvas.grid(row=CANVAS_ROW, column=0, sticky="nsew")
 
-    # Displacement of network adapters
-    netadapters_canvas.configure(yscrollcommand=scrollbar.set)
-    netadapters_canvas.bind_all(
-        "<MouseWheel>",
-        lambda e: netadapters_canvas.yview_scroll(-1*(e.delta//120), "units"))
+        # Scroball for the canvas
+        scrollbar = ttk.Scrollbar(
+            MAIN_FRAME, orient="vertical",
+            bootstyle="primary-round",
+            command=netadapters_canvas.yview)
+        scrollbar.grid(row=CANVAS_ROW, column=1, sticky="ns")
 
-    # Frame with the network adapters
-    NETADAPTERS_FRAME = ttk.Frame(
-        netadapters_canvas, width=WIDTH, height=HEIGHT)
-    netadapters_canvas.create_window(
-        (0, 0), window=NETADAPTERS_FRAME, anchor="nw")
+        # Displacement of network adapters
+        netadapters_canvas.configure(yscrollcommand=scrollbar.set)
+        netadapters_canvas.bind_all(
+            "<MouseWheel>",
+            lambda e: netadapters_canvas.yview_scroll(-1*(e.delta//120),
+                                                      "units"))
 
-    # Network adapters
-    create_net_wd(net_adapters)
+        # Frame with the network adapters
+        NETADAPTERS_FRAME = ttk.Frame(
+            netadapters_canvas, width=WIDTH, height=HEIGHT)
+        netadapters_canvas.create_window(
+            (0, 0), window=NETADAPTERS_FRAME, anchor="nw")
 
-    # Set the size of the main frame
-    app.grid_rowconfigure(0, weight=1)
-    app.grid_columnconfigure(0, weight=1)
+        # Network adapters
+        create_net_wd(net_adapters)
 
-    app.bind("<Configure>",
-             lambda e: netadapters_canvas.configure(
-                 scrollregion=netadapters_canvas.bbox("all"))
-             )
+        # Set the size of the main frame
+        app.grid_rowconfigure(0, weight=1)
+        app.grid_columnconfigure(0, weight=1)
 
-    app.mainloop()
+        app.bind("<Configure>",
+                 lambda e: netadapters_canvas.configure(
+                     scrollregion=netadapters_canvas.bbox("all"))
+                 )
+
+        app.mainloop()
+
+    except Exception as e:  # pylint: disable=broad-exception-caught # noqa
+        traceback.print_exc()
+        with open(f"{APPNAME.lower()}_error.log", mode="w",
+                  encoding="utf-8") as file:
+            traceback.print_exc(file=file)
+
+        ctypes.windll.user32.MessageBoxW(
+            0,
+            ("Sorry, an error occurred while trying to start the application."
+             "\nPlease contact the developer (@javierorp)."),
+            f"{APPNAME} - Error", 0x40 | 0x0)
