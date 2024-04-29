@@ -5,13 +5,13 @@
 
 **<ins>Si</ins>mple <ins>N</ins>etwork <ins>A</ins>dapter <ins>Ma</ins>nager for <ins>Win</ins>dows**
 
-A quick and easy way **to manage network adapters** in Windows (**IPv4** only for now).
+A quick and easy way **to manage network adapters** in Windows (only **IPv4** for now).
 
 :arrow_double_down: [Download](https://github.com/javierorp/Sinamawin/releases)
 
 If you detect any error, have any doubt, suggestion or want to contact me you can do it via:
 
-[<img src="https://raw.githubusercontent.com/javierorp/Sinamawin/master/images/logos/linkedin_logo.png" width="20" height="20" alt="LinkedIn logo">](https://es.linkedin.com/in/javierortipriego) [<img src="https://raw.githubusercontent.com/javierorp/Sinamawin/master/images/logos/github_logo.png" width="20" height="20" alt="GitHub logo">](https://github.com/javierorp) [<img src="https://raw.githubusercontent.com/javierorp/Sinamawin/master/images/logos/outlook_logo.png" width="20" height="20" alt="Outlook logo">](mailto:javierorp@outlook.com)
+[<img src="https://raw.githubusercontent.com/javierorp/Sinamawin/main/images/linkedin_logo.png" width="20" height="20" alt="LinkedIn logo">](https://es.linkedin.com/in/javierortipriego) [<img src="https://raw.githubusercontent.com/javierorp/Sinamawin/main/images/github_logo.png" width="20" height="20" alt="GitHub logo">](https://github.com/javierorp) [<img src="https://raw.githubusercontent.com/javierorp/Sinamawin/main/images/outlook_logo.png" width="20" height="20" alt="Outlook logo">](mailto:javierorp@outlook.com)
 
 ## Table of Contents
 
@@ -53,13 +53,13 @@ If the application is not running as administrator, a banner will appear at the 
 
 ### How to copy all the information about a network adapter?
 
-Click on the "Select action" button and select "Copy information". The network adapter information will be copied to the clipboard.
+Click on "Select action" and select "Copy information". The network adapter information will be copied to the clipboard.
 
 <img width="800" src="./images/Screenshot_3.png" alt="Application interface. Copy information">
 
 ### How to enable/disable a network adapter?
 
-Click on the "Select action" button and select "Enable/Disable network adapter". A confirmation dialog box will appear and, if accepted, the network adapter will be enabled/disabled. Afterwards, the network adapter information will be refreshed.
+Click on "Select action" and select "Enable/Disable network adapter". A confirmation dialog box will appear and, if accepted, the network adapter will be enabled/disabled. Afterwards, the network adapter information will be refreshed.
 
 <img width="800" src="./images/Screenshot_4.png" alt="Application interface. Disabe network adapter">
 

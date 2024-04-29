@@ -6,7 +6,7 @@ setup(
     name="Sinamawin",
     version="0.1.0",
     description=("A quick and easy way to manage "
-                 "network adapters in Windows (IPv4 only)."),
+                 "network adapters in Windows (only IPv4)."),
     long_description=open("README.md", encoding="utf-8").read().strip(),
     long_description_content_type="text/markdown",
     author="Javierorp",
