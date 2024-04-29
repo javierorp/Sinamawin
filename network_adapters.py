@@ -30,7 +30,9 @@ class NetworkAdapters:
                               "InterfaceIndex",
                               ",ServerAddresses"],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         output, _ = p.communicate()
 
@@ -80,7 +82,9 @@ class NetworkAdapters:
                                   "HKLM:\\SYSTEM\\CurrentControlSet" +
                                   "\\Control\\Nls\\CodePage OEMCP"],
                                  stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+                                 stderr=subprocess.PIPE,
+                                 stdin=subprocess.DEVNULL,
+                                 creationflags=subprocess.CREATE_NO_WINDOW)
 
             oemcp, _ = p.communicate()
             oemcp = oemcp.decode('utf-8').replace("\n", "")
@@ -113,7 +117,9 @@ class NetworkAdapters:
                               ",Status",
                               ",MacAddress"],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         output, _ = p.communicate()
 
@@ -170,7 +176,9 @@ class NetworkAdapters:
                               ",PrefixOrigin",
                               ",SuffixOrigin"],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         output, _ = p.communicate()
 
@@ -224,7 +232,9 @@ class NetworkAdapters:
                               "ifIndex",
                               ",NextHop"],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         output, _ = p.communicate()
 
@@ -292,7 +302,9 @@ class NetworkAdapters:
                               f"'{str(alias)}'",
                               "-Confirm:$false"],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
         err_dec = error.decode(self._enconding)
@@ -322,7 +334,9 @@ class NetworkAdapters:
                               "-Name",
                               f"'{str(alias)}'"],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
         err_dec = error.decode(self._enconding)
@@ -438,7 +452,9 @@ class NetworkAdapters:
                               "0.0.0.0/0",
                               "-Confirm:$false"],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
         err_dec = error.decode(self._enconding)
@@ -470,7 +486,9 @@ class NetworkAdapters:
                               str(index),
                               "-ResetServerAddresses"],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
         err_dec = error.decode(self._enconding)
@@ -501,7 +519,9 @@ class NetworkAdapters:
                               str(index),
                               "-Confirm:$false"],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
         err_dec = error.decode(self._enconding)
@@ -541,7 +561,9 @@ class NetworkAdapters:
                               "-NextHop",
                               str(ip)],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
         err_dec = error.decode(self._enconding)
@@ -580,7 +602,9 @@ class NetworkAdapters:
                                   filter(None,
                                          [str(pref_dns), str(alt_dns)])))],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
         err_dec = error.decode(self._enconding)
@@ -622,7 +646,9 @@ class NetworkAdapters:
                               str(self.subnet_mask_2_prefix_length(mask))
                               ],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
         err_dec = error.decode(self._enconding)
@@ -660,7 +686,9 @@ class NetworkAdapters:
                               "-DHCP",
                               "Enabled"],
                              stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+                             stderr=subprocess.PIPE,
+                             stdin=subprocess.DEVNULL,
+                             creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
         err_dec = error.decode(self._enconding)
