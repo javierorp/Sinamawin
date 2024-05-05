@@ -3,6 +3,7 @@
 import threading
 from time import sleep
 import tkinter as tk
+import traceback
 import ttkbootstrap as ttk
 from ttkbootstrap.toast import ToastNotification
 from ttkbootstrap.dialogs.dialogs import MessageDialog, Messagebox
@@ -10,7 +11,9 @@ from ttkbootstrap.tooltip import ToolTip
 import pyperclip
 
 from network_adapters import NetworkAdapters
+from net_adap_profiles import NetAdapProfiles
 
+APPNAME = "Sinamawin"
 LOADING_TIME = 10  # Waiting time to obtain the information
 ICON = "./resources/sinamawin.ico"  # App icon
 
@@ -18,11 +21,10 @@ ICON = "./resources/sinamawin.ico"  # App icon
 class NetAdapWidget:
     """Network adapter widget (ttkbootstrap.Labelframe)"""
 
-    def __init__(self, appname: str, idx: int, name: str, desc: str,
+    def __init__(self, idx: int, name: str, desc: str,
                  status: str, mac: str, ip: str, mask: str, gateway: str,
                  prefix_origin: str, suffix_origin: str, pref_dns: str,
                  alt_dns: str, disabled: bool) -> None:
-        self.appname = appname
         self.index = idx
         self.name = name
         self.desc = desc
@@ -72,6 +74,11 @@ class NetAdapWidget:
         self._d_alt_dns_server.configure(state=state)
         self._m_action.menu.entryconfigure(
             "Apply changes", state=m_state)
+        self._m_action.menu.entryconfigure(
+            "Apply profile", state=m_state)
+
+        if self._d_status.cget('text') in ["Disabled", "Not Present"]:
+            self._m_action.menu.entryconfigure("Save profile", state=m_state)
 
         return
 
@@ -88,8 +95,8 @@ class NetAdapWidget:
         self._d_alt_dns_server.configure(state=state)
         self._m_action.menu.entryconfigure(
             "Apply changes", state=m_state)
-        # self._m_action.menu.entryconfigure(
-        #     "Apply favorite", state=m_state)
+        self._m_action.menu.entryconfigure(
+            "Apply profile", state=m_state)
         try:
             self._m_action.menu.entryconfigure(
                 "Enable network adapter", state=m_state)
@@ -118,8 +125,8 @@ class NetAdapWidget:
         self._d_alt_dns_server.configure(state=state)
         self._m_action.menu.entryconfigure(
             "Apply changes", state=m_state)
-        # self._m_action.menu.entryconfigure(
-        #     "Apply favorite", state=m_state)
+        self._m_action.menu.entryconfigure(
+            "Apply profile", state=m_state)
         try:
             self._m_action.menu.entryconfigure(
                 "Enable network adapter", state=m_state)
@@ -185,9 +192,13 @@ class NetAdapWidget:
 
             return
         except:  # pylint: disable=bare-except # noqa
+            traceback.print_exc()
+            with open(f"{APPNAME.lower()}_error.log", mode="w",
+                      encoding="utf-8") as file:
+                traceback.print_exc(file=file)
             Messagebox.show_error(
                 message="The configuration could not be applied.",
-                title="Error",
+                title=f"{APPNAME} - Error",
                 padding=(30, 30),
                 width=100)
 
@@ -290,7 +301,7 @@ class NetAdapWidget:
             seconds (int, optional): Seconds that the window will be displayed.
                 Defaults to 5.
         """
-        popup = ttk.Toplevel(title=self.appname if not title else title,
+        popup = ttk.Toplevel(title=APPNAME if not title else title,
                              resizable=(False, False),
                              minsize=(400, 70),
                              topmost=True)
@@ -338,7 +349,22 @@ class NetAdapWidget:
 
         return
 
-    def _update_info(self):
+    def _save_profile(self) -> None:
+        """Save profile into the user folder."""
+
+        nap = NetAdapProfiles(
+            ip=self._d_ip_addr.get().strip(),
+            mask=self._d_subnet.get().strip(),
+            gateway=self._d_gateway.get().strip(),
+            pref_dns=self._d_pref_dns_server.get().strip(),
+            alt_dns=self._d_alt_dns_server.get().strip(),
+        )
+
+        nap.save_profile_popup()
+
+        return
+
+    def _update_info(self) -> None:
         """Update the network adapter data."""
 
         ni = NetworkAdapters()
@@ -361,6 +387,7 @@ class NetAdapWidget:
         ) if suffix_origin == "Dhcp" else suffix_origin
         self.pref_dns = info["pref_dns"]
         self.alt_dns = info["alt_dns"]
+
         return
 
     def apply_changes(self) -> None:
@@ -380,7 +407,7 @@ class NetAdapWidget:
             def show_error(msg):
                 Messagebox.show_error(
                     message=msg,
-                    title="Invalid data",
+                    title=f"{APPNAME} - Invalid data",
                     padding=(30, 30),
                     width=100)
 
@@ -395,19 +422,19 @@ class NetAdapWidget:
             if gateway == "":
                 gateway = "0.0.0.0"
             elif not ni.validate_ipv4(gateway):
-                Messagebox.show_error("Invalid default gateway.")
+                show_error("Invalid default gateway.")
                 return
 
             if pref_dns and not ni.validate_ipv4(pref_dns):
-                Messagebox.show_error("Invalid preferred DNS server.")
+                show_error("Invalid preferred DNS server.")
                 return
 
             if alt_dns and not ni.validate_ipv4(alt_dns):
-                Messagebox.show_error("Invalid alternate DNS server.")
+                show_error("Invalid alternate DNS server.")
                 return
 
             if pref_dns and pref_dns == alt_dns:
-                Messagebox.show_error(
+                show_error(
                     "The preferred and alternate"
                     " DNS servers can not be the same.")
                 return
@@ -469,11 +496,48 @@ class NetAdapWidget:
 
                 return
         except:  # pylint: disable=bare-except # noqa
+            traceback.print_exc()
+            with open(f"{APPNAME.lower()}_error.log", mode="w",
+                      encoding="utf-8") as file:
+                traceback.print_exc(file=file)
+
             Messagebox.show_error(
                 message="The configuration could not be applied.",
-                title="Error",
+                title=f"{APPNAME} - Error",
                 padding=(30, 30),
                 width=100)
+
+    def apply_profile(self) -> None:
+        """Apply a saved profile."""
+        selection = NetAdapProfiles().manage_profiles(select=True)
+
+        if not selection:
+            return
+
+        # -- IP address --
+        self._d_ip_addr.delete(0, tk.END)
+        self._d_ip_addr.insert(0, selection["ip"])
+
+        # -- Subnet mask --
+        self._d_subnet.delete(0, tk.END)
+        self._d_subnet.insert(0, selection["mask"])
+
+        # -- Default gateway --
+        self._d_gateway.delete(0, tk.END)
+        self._d_gateway.insert(0, selection["gateway"])
+
+        # -- Preferred DNS Server --
+        self._d_pref_dns_server.delete(0, tk.END)
+        self._d_pref_dns_server.insert(0, selection["pref_dns"])
+
+        # -- Alternate DNS Server --
+        self._d_alt_dns_server.delete(0, tk.END)
+        self._d_alt_dns_server.insert(0, selection["alt_dns"])
+
+        if selection["apply"]:
+            self.apply_changes()
+
+        return
 
     def copy_clipboard(self) -> None:
         """Copy all network adapter information to the clipboard."""
@@ -587,7 +651,7 @@ class NetAdapWidget:
         information is hosted
         """
         # ---------
-        # | ROW 1 |
+        # | ROW 0 |
         # ---------
 
         # -- Status --
@@ -632,7 +696,8 @@ class NetAdapWidget:
         self._m_action["menu"] = self._m_action.menu
         self._m_action.menu.add_command(
             label="Apply changes", command=self.apply_changes)
-        # self._m_action.menu.add_command(label="Apply favorite")
+        self._m_action.menu.add_command(label="Apply profile",
+                                        command=self.apply_profile)
         self._m_action.menu.add_command(
             label="Copy information",
             command=self.copy_clipboard)
@@ -644,13 +709,14 @@ class NetAdapWidget:
             self._m_action.menu.add_command(
                 label="Disable network adapter",
                 command=lambda: self.endis_adapter(disable=True))
-        # self._m_action.menu.add_command(label="Save as favorite") # TODO
+        self._m_action.menu.add_command(
+            label="Save profile", command=self._save_profile)
 
         self._m_action.grid(row=0, column=6, columnspan=2,
                             padx=(15, 5), pady=5, sticky="w")
 
         # ---------
-        # | ROW 2 |
+        # | ROW 1 |
         # ---------
 
         # -- IP address --
@@ -707,7 +773,7 @@ class NetAdapWidget:
                     self.suffix_origin), delay=500)
 
         # ---------
-        # | ROW 3 |
+        # | ROW 2 |
         # ---------
 
         # -- Preferred DNS Server --
@@ -740,11 +806,14 @@ class NetAdapWidget:
 
         return
 
-    def toast_notification(self, toast_msg) -> None:
-        """Display a notification toast with a message."""
+    def toast_notification(self, toast_msg: str) -> None:
+        """Display a notification toast with a message.
 
+        Args:
+            toast_msg (str): Message to be displayed.
+        """
         toast = ToastNotification(
-            title=self.appname,
+            title=APPNAME,
             message=toast_msg,
             duration=5000,
             icon="\u2714"
@@ -761,7 +830,7 @@ class NetAdapWidget:
         self._enabled_all_wd()
 
         # ---------
-        # | ROW 1 |
+        # | ROW 0 |
         # ---------
 
         # -- Status --
@@ -786,7 +855,7 @@ class NetAdapWidget:
 
         self._m_action.menu.add_command(
             label="Apply changes", command=self.apply_changes)
-        # self._m_action.menu.add_command(label="Apply favorite")
+        self._m_action.menu.add_command(label="Apply profile")
         self._m_action.menu.add_command(
             label="Copy information",
             command=self.copy_clipboard)
@@ -798,10 +867,11 @@ class NetAdapWidget:
             self._m_action.menu.add_command(
                 label="Disable network adapter",
                 command=lambda: self.endis_adapter(disable=True))
-        # self._m_action.menu.add_command(label="Save as favorite") # TODO
+        self._m_action.menu.add_command(
+            label="Save profile", command=self._save_profile)
 
         # ---------
-        # | ROW 2 |
+        # | ROW 1 |
         # ---------
 
         # -- IP address --
@@ -833,7 +903,7 @@ class NetAdapWidget:
                     self.suffix_origin), delay=500)
 
         # ---------
-        # | ROW 3 |
+        # | ROW 2 |
         # ---------
 
         # -- Preferred DNS Server --

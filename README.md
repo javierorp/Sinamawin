@@ -18,12 +18,14 @@ If you detect any error, have any doubt, suggestion or want to contact me you ca
 - [Sinamawin](#sinamawin)
   - [Table of Contents](#table-of-contents)
   - [Features](#features)
-    - [To do](#to-do)
   - [How to](#how-to)
     - [How to copy all the information about a network adapter?](#how-to-copy-all-the-information-about-a-network-adapter)
     - [How to enable/disable a network adapter?](#how-to-enabledisable-a-network-adapter)
     - [How to modify the properties of a network adapter?](#how-to-modify-the-properties-of-a-network-adapter)
     - [How to set DHCP for a network adapter?](#how-to-set-dhcp-for-a-network-adapter)
+    - [How to save a profile?](#how-to-save-a-profile)
+    - [How to apply a profile?](#how-to-apply-a-profile)
+    - [How to manage saved profiles?](#how-to-manage-saved-profiles)
   - [Tested screen resolutions](#tested-screen-resolutions)
   - [Licenses](#licenses)
 
@@ -36,18 +38,13 @@ To modify the properties of the network adapters it is required to run the appli
 - [x] Enable/disable the network adapter.
 - [x] Change the configuration of network adapters.
 - [x] Set DHCP configuration for a network adapter.
+- [x] Save and manage profiles to be applied to network adapters.
 
 <img width="800" src="./images/Screenshot_1.png" alt="Application interface">
 
 If the application is not running as administrator, a banner will appear at the top.
 
 <img width="800" src="./images/Screenshot_2.png" alt="Application interface">
-
-### To do
-
-- [ ] Save configurations as favorites.
-- [ ] Apply configurations from favorites.
-- [ ] Export/import favorites.
 
 ## How to
 
@@ -76,6 +73,30 @@ If the "Manual" check button is enabled, disabling it activates the DHCP setting
 <img width="800" src="./images/Screenshot_6.png" alt="Application interface. Set DHCP">
 
 <img width="800" src="./images/Screenshot_7.png" alt="Application interface. Set DHCP - confirmation dialog box">
+
+### How to save a profile?
+
+Click on "Select action" and select "Save profile". A modal window will appear to set an alias to the profile and modify the values before saving it.
+
+<img width="800" src="./images/Screenshot_8.png" alt="Application interface. Set DHCP - confirmation dialog box">
+
+<img width="800" src="./images/Screenshot_9.png" alt="Application interface. Set DHCP - confirmation dialog box">
+
+### How to apply a profile?
+
+Click on "Select action" and select "Apply profile". The manage profiles window will appear and the chosen profile can be selected. If "Select" is clicked, the profile will be copied to the network adapter but will not be applied. If "Select & Apply" is clicked, the profile will be applied to the network adapter.
+
+<img width="800" src="./images/Screenshot_10.png" alt="Application interface. Set DHCP - confirmation dialog box">
+
+<img width="800" src="./images/Screenshot_11.png" alt="Application interface. Set DHCP - confirmation dialog box">
+
+### How to manage saved profiles?
+
+Click on "Edit" on the top toolbar and select "Profiles". The manage profiles window will appear and a new profile can be added and an existing profile can be edited or deleted.
+
+<img width="500" src="./images/Screenshot_12.png" alt="Application interface. Set DHCP - confirmation dialog box">
+
+<img width="500" src="./images/Screenshot_13.png" alt="Application interface. Set DHCP - confirmation dialog box">
 
 ## Tested screen resolutions
 
