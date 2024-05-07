@@ -643,7 +643,9 @@ class NetworkAdapters:
                               "-IPAddress",
                               str(ip),
                               "-PrefixLength",
-                              str(self.subnet_mask_2_prefix_length(mask))
+                              str(self.subnet_mask_2_prefix_length(mask)),
+                              "-PolicyStore",
+                              "ActiveStore"
                               ],
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
@@ -657,9 +659,13 @@ class NetworkAdapters:
             raise PermissionError("No administrator permissions")
         elif "ObjectNotFound" in err_dec:
             raise KeyError("Invalid network adapter index")
+        elif "MSFT_NetIPAddress already exists" in err_dec:
+            self.reset_ip(index)
+            self.set_ip_mask(index, ip, mask)
         elif err_dec:
-            raise NotImplementedError(
-                "An error occurred while setting the IP")
+            err = ("An error occurred while setting the IP: "
+                   + err_dec.split("\n", maxsplit=1)[0].split(":")[1].strip())
+            raise NotImplementedError(err)
         return
 
     def set_net_dhcp(self, index: int) -> None:
