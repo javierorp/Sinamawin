@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="Sinamawin",
-    version="0.1.0",
+    version="0.2.0",
     description=("A quick and easy way to manage "
                  "network adapters in Windows (only IPv4)."),
     long_description=open("README.md", encoding="utf-8").read().strip(),

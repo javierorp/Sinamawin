@@ -1,10 +1,14 @@
 # Sinamawin - Changelog
 
-## [Unreleased]
+## 0.2.0 (May 2024)
 
 ### Added
 
 - Save and manage profiles and apply them to the adapter of your choice.
+
+### Fixed
+
+- Error setting IP due to inconsistent parameters PolicyStore PersistentStore and Dhcp Enabled. PolicyStore is now configured as ActiveStore (workaround).
 
 ## 0.1.0 (April 2024)
 
