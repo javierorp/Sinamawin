@@ -471,7 +471,10 @@ class NetAdapWidget:
                 ni.set_ip_mask(self.index, ip, mask)
 
                 if gateway != "0.0.0.0":
-                    ni.reset_def_gateway(self.index)
+                    try:
+                        ni.reset_def_gateway(self.index)
+                    except KeyError:
+                        pass
                     ni.set_def_gateway(self.index, gateway)
 
                 if not pref_dns and not alt_dns:
@@ -855,7 +858,8 @@ class NetAdapWidget:
 
         self._m_action.menu.add_command(
             label="Apply changes", command=self.apply_changes)
-        self._m_action.menu.add_command(label="Apply profile")
+        self._m_action.menu.add_command(
+            label="Apply profile", command=self.apply_profile)
         self._m_action.menu.add_command(
             label="Copy information",
             command=self.copy_clipboard)

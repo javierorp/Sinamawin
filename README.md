@@ -36,7 +36,7 @@ To modify the properties of the network adapters it is required to run the appli
 - [x] View all network adapters in the computer.
 - [x] Copy all the information of each network adapter (index,name, description, status, MAC address, IP address, subnet mask, default gateway, prefix origin, suffix origin, preferred and alternate DNS server).
 - [x] Enable/disable the network adapter.
-- [x] Change the configuration of network adapters.
+- [x] Change the configuration of network adapters. The configuration is established until the computer is restarted (PolicyStore ActiveStore).
 - [x] Set DHCP configuration for a network adapter.
 - [x] Save and manage profiles to be applied to network adapters.
 
