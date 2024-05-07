@@ -1,14 +1,17 @@
 """Sinamawin - Simple Network Adapter Manager for Windows"""
 
 import ctypes
+import os
 import tkinter as tk
 import traceback
 import webbrowser
 import ttkbootstrap as ttk
 from ttkbootstrap.toast import ToastNotification
 from PIL import Image, ImageTk
+
 from network_adapters import NetworkAdapters
 from net_adap_widget import NetAdapWidget
+from net_adap_profiles import NetAdapProfiles
 
 
 APPNAME = "Sinamawin"
@@ -123,6 +126,25 @@ def about_popup() -> None:
     return
 
 
+def check_app_folder() -> None:
+    """Check if the application folder exists and create it if necessary."""
+    appdata_path = os.environ.get("APPDATA")
+
+    # Use the application path if there is no user path
+    if not appdata_path:
+        appdata_path = "."
+
+    appdata_path = f"{appdata_path}\\{APPNAME}"
+
+    if not os.path.exists(appdata_path):
+        os.mkdir(appdata_path)
+
+    # Save the profile path in an environment variable
+    os.environ[f"{APPNAME}_PROFILES"] = f"{appdata_path}\\profiles"
+
+    return
+
+
 def create_net_wd(adapters: dict) -> None:
     """Create widgets with the information of each network adapter.
 
@@ -135,7 +157,6 @@ def create_net_wd(adapters: dict) -> None:
 
         for idx, (a_idx, a_info) in enumerate(adapters.items()):
             netframe = NetAdapWidget(
-                appname=APPNAME,
                 idx=a_idx,
                 name=a_info["name"],
                 desc=a_info["desc"],
@@ -234,6 +255,9 @@ def refresh() -> None:
 
 if __name__ == "__main__":
     try:
+        # App folder
+        check_app_folder()
+
         # Get network adapter info
         net_adapters = NetworkAdapters().get_info()
 
@@ -270,6 +294,7 @@ if __name__ == "__main__":
         helpmenu = tk.Menu(menubar)
 
         menubar.add_cascade(label="File", menu=filemenu)
+        menubar.add_cascade(label="Edit", menu=editmenu)
         menubar.add_cascade(label="Help", menu=helpmenu)
 
         # File menu
@@ -277,6 +302,11 @@ if __name__ == "__main__":
                              accelerator="Ctrl+R")
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=app.quit)
+
+        # Edit menu
+        editmenu.add_command(
+            label="Profiles",
+            command=lambda: NetAdapProfiles().manage_profiles())
 
         # Help menu
         helpmenu.add_command(label="About", command=about_popup)

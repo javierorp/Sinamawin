@@ -1,5 +1,11 @@
 # Sinamawin - Changelog
 
+## [Unreleased]
+
+### Added
+
+- Save and manage profiles and apply them to the adapter of your choice.
+
 ## 0.1.0 (April 2024)
 
 First version:
