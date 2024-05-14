@@ -1,5 +1,11 @@
 # Sinamawin - Changelog
 
+## Unreleased
+
+### Added
+
+- New module (Tools->ARP) to find out the MAC addresses of the network adapter to which it is connected.
+
 ## 0.2.0 (May 2024)
 
 ### Added
