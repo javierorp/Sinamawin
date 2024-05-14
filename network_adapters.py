@@ -8,7 +8,7 @@ class NetworkAdapters:
     """Network Adapters"""
 
     def __init__(self) -> None:
-        self._enconding = self._get_enconding()
+        self.enconding = self.get_enconding()
 
     def _get_dns_client_server_address(self) -> dict:
         """Get network adapter information from Get-DnsClientServerAddress.
@@ -36,7 +36,7 @@ class NetworkAdapters:
 
         output, _ = p.communicate()
 
-        out_dec = output.decode(self._enconding).split("InterfaceIndex")
+        out_dec = output.decode(self.enconding).split("InterfaceIndex")
 
         adapters = {}
         for adapter in out_dec:
@@ -71,7 +71,7 @@ class NetworkAdapters:
 
         return adapters
 
-    def _get_enconding(self) -> str:
+    def get_enconding(self) -> str:
         """Get terminal enconding.
 
         Returns:
@@ -123,7 +123,7 @@ class NetworkAdapters:
 
         output, _ = p.communicate()
 
-        out_dec = output.decode(self._enconding).split("ifIndex")
+        out_dec = output.decode(self.enconding).split("ifIndex")
 
         adapters = {}
         for adapter in out_dec:
@@ -182,7 +182,7 @@ class NetworkAdapters:
 
         output, _ = p.communicate()
 
-        out_dec = output.decode(self._enconding).split("InterfaceIndex")
+        out_dec = output.decode(self.enconding).split("InterfaceIndex")
 
         adapters = {}
         for adapter in out_dec:
@@ -238,7 +238,7 @@ class NetworkAdapters:
 
         output, _ = p.communicate()
 
-        out_dec = output.decode(self._enconding).split("ifIndex")
+        out_dec = output.decode(self.enconding).split("ifIndex")
 
         adapters = {}
         for adapter in out_dec:
@@ -307,7 +307,7 @@ class NetworkAdapters:
                              creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
-        err_dec = error.decode(self._enconding)
+        err_dec = error.decode(self.enconding)
 
         if "PermissionDenied" in err_dec:
             raise PermissionError("No administrator permissions")
@@ -339,7 +339,7 @@ class NetworkAdapters:
                              creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
-        err_dec = error.decode(self._enconding)
+        err_dec = error.decode(self.enconding)
 
         if "PermissionDenied" in err_dec:
             raise PermissionError("No administrator permissions")
@@ -457,7 +457,7 @@ class NetworkAdapters:
                              creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
-        err_dec = error.decode(self._enconding)
+        err_dec = error.decode(self.enconding)
 
         if "PermissionDenied" in err_dec:
             raise PermissionError("No administrator permissions")
@@ -491,7 +491,7 @@ class NetworkAdapters:
                              creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
-        err_dec = error.decode(self._enconding)
+        err_dec = error.decode(self.enconding)
 
         if "PermissionDenied" in err_dec:
             raise PermissionError("No administrator permissions")
@@ -524,7 +524,7 @@ class NetworkAdapters:
                              creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
-        err_dec = error.decode(self._enconding)
+        err_dec = error.decode(self.enconding)
 
         if "PermissionDenied" in err_dec:
             raise PermissionError("No administrator permissions")
@@ -566,7 +566,7 @@ class NetworkAdapters:
                              creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
-        err_dec = error.decode(self._enconding)
+        err_dec = error.decode(self.enconding)
 
         if "PermissionDenied" in err_dec:
             raise PermissionError("No administrator permissions")
@@ -607,7 +607,7 @@ class NetworkAdapters:
                              creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
-        err_dec = error.decode(self._enconding)
+        err_dec = error.decode(self.enconding)
 
         if "PermissionDenied" in err_dec:
             raise PermissionError("No administrator permissions")
@@ -653,7 +653,7 @@ class NetworkAdapters:
                              creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
-        err_dec = error.decode(self._enconding)
+        err_dec = error.decode(self.enconding)
 
         if "PermissionDenied" in err_dec:
             raise PermissionError("No administrator permissions")
@@ -697,7 +697,7 @@ class NetworkAdapters:
                              creationflags=subprocess.CREATE_NO_WINDOW)
 
         _, error = p.communicate()
-        err_dec = error.decode(self._enconding)
+        err_dec = error.decode(self.enconding)
 
         if "PermissionDenied" in err_dec:
             raise PermissionError("No administrator permissions")

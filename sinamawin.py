@@ -12,6 +12,7 @@ from PIL import Image, ImageTk
 from network_adapters import NetworkAdapters
 from net_adap_widget import NetAdapWidget
 from net_adap_profiles import NetAdapProfiles
+from arp import arp_widget
 
 
 APPNAME = "Sinamawin"
@@ -291,10 +292,12 @@ if __name__ == "__main__":
 
         filemenu = tk.Menu(menubar)
         editmenu = tk.Menu(menubar)
+        toolsmenu = tk.Menu(menubar)
         helpmenu = tk.Menu(menubar)
 
         menubar.add_cascade(label="File", menu=filemenu)
         menubar.add_cascade(label="Edit", menu=editmenu)
+        menubar.add_cascade(label="Tools", menu=toolsmenu)
         menubar.add_cascade(label="Help", menu=helpmenu)
 
         # File menu
@@ -307,6 +310,14 @@ if __name__ == "__main__":
         editmenu.add_command(
             label="Profiles",
             command=lambda: NetAdapProfiles().manage_profiles())
+
+        # Tools menu
+        toolsmenu.add_command(
+            label="ARP",
+            command=lambda: arp_widget([{
+                "ip": data["ip"], "name": data["name"]}
+                for data in net_adapters.values()])
+        )
 
         # Help menu
         helpmenu.add_command(label="About", command=about_popup)
