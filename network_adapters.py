@@ -200,6 +200,13 @@ class NetworkAdapters:
                 desc, value = prop.split(":")
                 properties[desc.strip()] = value.strip()
 
+            # (Issue #4) If more than one IP is assigned to an interface,
+            # the "Manual" prevails
+            if (int(properties["InterfaceIndex"]) in adapters
+                and not (properties["PrefixOrigin"] == "Manual"
+                         or properties["SuffixOrigin"]) == "Manual"):
+                continue
+
             adapters[int(properties["InterfaceIndex"])] = {
                 "ip": properties["IPAddress"].strip(),
                 "prefix_length": int(properties["PrefixLength"]) if

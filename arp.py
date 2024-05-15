@@ -103,8 +103,11 @@ def arp_widget(adapters: list) -> None:
         d_ip_addr.grid(row=1, column=1, padx=5, pady=5)
 
         # -- Interface --
-        cb_iface_val = ["-- Select interface --"] + \
-            [f"{elem['ip']} ({elem['name']})" for elem in adapters]
+        cb_iface_val = ["-- Select interface --"]
+        for adap in adapters:
+            if adap["ip"]:
+                cb_iface_val.append(f"{adap['ip']} ({adap['name']})")
+
         cb_iface = ttk.Combobox(popup,
                                 state="readonly",
                                 values=cb_iface_val,
