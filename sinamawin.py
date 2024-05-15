@@ -20,6 +20,7 @@ ICON = "./resources/sinamawin.ico"  # App icon
 ABOUT_LOGO = ""  # App logo in About window
 ADMIN = False  # Privileges
 MAIN_FRAME = None  # Frame containing the network adapters and the scrollbar
+NETADAPTERS = None  # Network adapters
 NETADAPTERS_FRAME = None  # Frame containing all the frames
 # of the network adapters
 NETFRAMES = []  # Frames of all network adapters
@@ -228,6 +229,9 @@ def refresh() -> None:
 
     adapters = NetworkAdapters().get_info()
 
+    global NETADAPTERS  # pylint: disable=global-statement
+    NETADAPTERS = adapters
+
     global NETFRAMES  # pylint: disable=global-statement
 
     if isinstance(NETFRAMES, list):
@@ -261,6 +265,7 @@ if __name__ == "__main__":
 
         # Get network adapter info
         net_adapters = NetworkAdapters().get_info()
+        NETADAPTERS = net_adapters
 
         # To know if the application has been launched as administrator.
         try:
@@ -316,7 +321,7 @@ if __name__ == "__main__":
             label="ARP",
             command=lambda: arp_widget([{
                 "ip": data["ip"], "name": data["name"]}
-                for data in net_adapters.values()])
+                for data in NETADAPTERS.values()])
         )
 
         # Help menu

@@ -6,6 +6,11 @@
 
 - New module (Tools->ARP) to find out the MAC addresses of the network adapter to which it is connected.
 
+### Fixed
+
+- (Issue #4) When more than one IP was assigned to an interface, the "Manual" did not prevail.
+- The network adapters were not getting updated in the ARP module.
+
 ## 0.2.0 (May 2024)
 
 ### Added
