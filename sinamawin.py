@@ -1,13 +1,20 @@
 """Sinamawin - Simple Network Adapter Manager for Windows"""
 
 import ctypes
+from datetime import datetime
+import json
 import os
+import re
+import threading
 import tkinter as tk
 import traceback
 import webbrowser
+import requests
 import ttkbootstrap as ttk
 from ttkbootstrap.toast import ToastNotification
+from ttkbootstrap.dialogs.dialogs import MessageDialog
 from PIL import Image, ImageTk
+from packaging.version import Version
 
 from network_adapters import NetworkAdapters
 from net_adap_widget import NetAdapWidget
@@ -16,6 +23,7 @@ from arp import arp_widget
 
 
 APPNAME = "Sinamawin"
+APP_INFO = None
 ICON = "./resources/sinamawin.ico"  # App icon
 ABOUT_LOGO = ""  # App logo in About window
 ADMIN = False  # Privileges
@@ -43,7 +51,19 @@ def about_popup() -> None:
     l_logo.grid(row=0, column=0, padx=(50, 10), pady=10, rowspan=2, sticky="w")
 
     # App name
-    l_app = ttk.Label(popup, text=APPNAME,
+    appname_txt = APPNAME
+    if APP_INFO:
+        appname_txt = (f"{APPNAME} (v{APP_INFO['version']}"
+                       f"{'*' if not APP_INFO['up_to_date'] else ''}")
+
+        if APP_INFO["version_date"]:
+            ver_date = datetime.strptime(
+                APP_INFO["version_date"], "%Y-%m-%dT%H:%M:%SZ")
+            appname_txt = appname_txt + f" - {ver_date.strftime('%b %Y')}"
+
+        appname_txt = appname_txt + ")"
+
+    l_app = ttk.Label(popup, text=appname_txt,
                       font=("Arial", 14, "bold"))
     l_app.grid(row=0, column=0, padx=10, pady=(10, 0))
 
@@ -52,9 +72,11 @@ def about_popup() -> None:
         font=("Arial", 12))
     l_app_desc.grid(row=1, column=0, padx=10, pady=5)
 
-    t_lic = tk.Text(popup, wrap="word", height=15,
+    t_lic = tk.Text(popup, wrap="word", height=16,
                     relief="flat", font=("Arial", 11))
     t_lic.grid(row=2, column=0, padx=10, pady=10)
+
+    t_lic.tag_configure("bold", font=("Arial", 11, "bold"))
 
     # Dev and GitHub
     t_lic.insert(tk.END, "This application has been developed by ")
@@ -123,13 +145,35 @@ def about_popup() -> None:
     t_lic.tag_bind("freepik", "<Button-1>", lambda e: webbrowser.open(
         "https://www.freepik.com"))
 
+    if APP_INFO and not APP_INFO["up_to_date"]:
+        t_lic.insert(tk.END, "\n *Download the latest version ", "bold")
+        t_lic.tag_configure("last_version", foreground="blue",
+                            font=("Arial", 11, "bold"))
+        last_ver_date = datetime.strptime(
+            APP_INFO["last_version_date"], "%Y-%m-%dT%H:%M:%SZ")
+        t_lic.insert(
+            tk.END,
+            f"{APP_INFO['last_version']} ({last_ver_date.strftime('%b %Y')})",
+            "last_version")
+        t_lic.insert(tk.END, ".\n")
+
+        t_lic.tag_bind("last_version", "<Button-1>", lambda e: webbrowser.open(
+            APP_INFO["url"]))
+
     t_lic.configure(state="disabled")
+
+    # Mouse wheel behavior
+    def popup_window_scroll(_):
+        """To avoid propagating the event to the main window."""
+        return "break"
+
+    popup.bind("<MouseWheel>", popup_window_scroll)
 
     return
 
 
 def check_app_folder() -> None:
-    """Check if the application folder exists and create it if necessary."""
+    """Check if the application folder/file exists and create it if necessary."""
     appdata_path = os.environ.get("APPDATA")
 
     # Use the application path if there is no user path
@@ -141,10 +185,118 @@ def check_app_folder() -> None:
     if not os.path.exists(appdata_path):
         os.mkdir(appdata_path)
 
+    prefdata_path = appdata_path + "\\preferences"
+    if not os.path.exists(prefdata_path):
+        preferences = {
+            "themename": "litera",
+            "skip_vers": []
+        }
+        with open(prefdata_path, "w", encoding="utf-8") as file:
+            json.dump(preferences, file, indent=4)
+
     # Save the profile path in an environment variable
     os.environ[f"{APPNAME}_PROFILES"] = f"{appdata_path}\\profiles"
+    os.environ[f"{APPNAME}_PREFERENCES"] = prefdata_path
 
     return
+
+
+def check_app_version() -> None:
+    """Check if a new version is available."""
+    try:
+        version = ""
+        last_version = ""
+        last_version_date = ""
+
+        # App version
+        with open("setup.py", "r", encoding="utf-8") as f:
+            content = f.read()
+            version_match = re.search(r"version=['\"]([^'\"]*)['\"]", content)
+            if version_match:
+                version = version_match.group(1)
+            else:
+                return
+
+        # Last version
+        url = ("https://api.github.com/repos/javierorp/"
+               "Sinamawin/releases/latest")
+        req = requests.get(url, timeout=30)
+        if req.status_code == 200:
+            data = req.json()
+            last_version = data["tag_name"]
+            last_version_date = data["published_at"]
+        else:
+            return
+
+        url_last_ver = ("https://github.com/javierorp/"
+                        f"Sinamawin/releases/tag/{last_version}")
+
+        global APP_INFO  # pylint: disable=global-statement
+        APP_INFO = {
+            "url": url_last_ver,
+            "version": version,
+            "version_date": "",
+            "last_version": last_version,
+            "last_version_date": last_version_date,
+            "up_to_date": False
+        }
+
+        if Version(version) == Version(last_version):
+            APP_INFO["up_to_date"] = True
+            APP_INFO["version_date"] = last_version_date
+            return
+        else:
+            url = "https://api.github.com/repos/javierorp/Sinamawin/releases"
+            req = requests.get(url, timeout=30)
+
+            if req.status_code == 200:
+                releases = req.json()
+
+                for release in releases:
+                    if release["tag_name"] == version:
+                        APP_INFO["version_date"] = release["published_at"]
+
+            if Version(version) >= Version(last_version):
+                APP_INFO["up_to_date"] = True
+                return
+
+        with open(os.environ[f"{APPNAME}_PREFERENCES"], "r",
+                  encoding="utf-8") as fprefers:
+            preferences = json.load(fprefers)
+
+        # Skip version
+        if last_version in preferences["skip_vers"]:
+            return
+
+        # Show "New version" modal
+        title = f"{APPNAME} - New version"
+        last_ver_datetime = datetime.strptime(
+            last_version_date, "%Y-%m-%dT%H:%M:%SZ")
+        msg = (f"New version available: {last_version}"
+               f" ({last_ver_datetime.strftime('%b %Y')})")
+        dialog = MessageDialog(message=msg,
+                               title=title,
+                               buttons=["Download", "Skip", "Cancel"],
+                               padding=(30, 30),
+                               width=100,
+                               alert=True)
+
+        dialog.show()
+
+        if dialog.result == "Download":
+            webbrowser.open(url_last_ver)
+        elif dialog.result == "Skip":
+            try:
+                preferences["skip_vers"].append(last_version)
+
+                with open(os.environ[f"{APPNAME}_PREFERENCES"], "w",
+                          encoding="utf-8") as fprefers:
+                    json.dump(preferences, fprefers, indent=4)
+            except:  # pylint: disable=bare-except # noqa
+                pass
+
+    except:  # pylint: disable=bare-except # noqa
+        pass
 
 
 def create_net_wd(adapters: dict) -> None:
@@ -276,13 +428,23 @@ if __name__ == "__main__":
 
         # Assign an ID to display the icon in the taskbar on Windows
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-            "Sinamawin")
+            APPNAME)
 
         WIDTH, HEIGHT = get_window_size()
         ADJ_HEIGHT = 1.06 if ADMIN else 1.11
 
-        app = ttk.Window(title="Sinamawin" + (" [Admin]" if ADMIN else ""),
-                         themename="litera",
+        THEME = "litera"
+        try:
+            with open(os.environ[f"{APPNAME}_PREFERENCES"], "r",
+                      encoding="utf-8") as fpref:
+                prefs = json.load(fpref)
+
+            THEME = prefs["themename"]
+        except:  # pylint: disable=bare-except # noqa
+            pass
+
+        app = ttk.Window(title=APPNAME + (" [Admin]" if ADMIN else ""),
+                         themename=THEME,
                          size=(int(WIDTH*1.025), int(HEIGHT*ADJ_HEIGHT)))
         app.resizable(False, False)
 
@@ -290,6 +452,9 @@ if __name__ == "__main__":
         app.iconbitmap(ICON)  # Set the bitmap for this window only
         app.iconbitmap(default=ICON)  # Set the default bitmap (.ico)
         app.iconbitmap(default='')  # Remove the default bitmap
+
+        # App version
+        threading.Thread(target=check_app_version).start()
 
         # Menu bar
         menubar = tk.Menu(app)
@@ -326,8 +491,6 @@ if __name__ == "__main__":
 
         # Help menu
         helpmenu.add_command(label="About", command=about_popup)
-        helpmenu.add_command(label="Releases", command=lambda: webbrowser.open(
-            "https://github.com/javierorp/Sinamawin/releases"))
 
         # Config menu
         app.config(menu=menubar)
@@ -403,8 +566,8 @@ if __name__ == "__main__":
     except Exception as e:  # pylint: disable=broad-exception-caught # noqa
         traceback.print_exc()
         with open(f"{APPNAME.lower()}_error.log", mode="w",
-                  encoding="utf-8") as file:
-            traceback.print_exc(file=file)
+                  encoding="utf-8") as flog:
+            traceback.print_exc(file=flog)
 
         ctypes.windll.user32.MessageBoxW(
             0,

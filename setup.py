@@ -29,5 +29,6 @@ setup(
         "pyperclip==1.8.2",
         "tk==0.1.0",
         "ttkbootstrap==1.10.1",
+        "requests==2.31.0",
     ],
 )
