@@ -5,6 +5,7 @@
 ### Added
 
 - New module (Tools->ARP) to find out the MAC addresses of the network adapter to which it is connected.
+- The availability of a new version is checked and the user is informed.
 
 ### Fixed
 
