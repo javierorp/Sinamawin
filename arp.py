@@ -165,7 +165,7 @@ def arp_widget(adapters: list) -> None:
 
             return
 
-        b_run = ttk.Button(popup, bootstyle="outline",
+        b_run = ttk.Button(popup,
                            text="Run", width=10,
                            command=run_btn)
         b_run.grid(row=1, column=3, padx=(5, 15), pady=5)
