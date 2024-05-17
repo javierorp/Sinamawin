@@ -7,6 +7,7 @@
 - New module (Tools->ARP) to find out the MAC addresses of the network adapter to which it is connected.
 - The availability of a new version is checked and the user is informed.
 - If a new network adapter is detected when the information is refreshed, it is highlighted in a different color.
+- The application theme can now be changed.
 
 ### Fixed
 

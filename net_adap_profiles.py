@@ -232,22 +232,21 @@ class NetAdapProfiles:
 
         # Buttons
         if select:  # "Select" and "Select & Apply"
-            b_select = ttk.Button(popup, text="Select", bootstyle="outline",
+            b_select = ttk.Button(popup, text="Select",
                                   command=select_apply_profile)
             b_sel_apply = ttk.Button(
                 popup, text="Select & Apply",
-                bootstyle="outline",
                 command=lambda: select_apply_profile(True))
             b_select.grid(row=1, column=1, padx=5, pady=10)
             b_sel_apply.grid(row=1, column=2, padx=5, pady=10)
 
         else:  # "New", "Edit" and "Delete"
-            b_new = ttk.Button(popup, text="New", bootstyle="outline",
+            b_new = ttk.Button(popup, text="New",
                                command=new_profile)
             b_edit = ttk.Button(popup, text="Edit",
-                                bootstyle="outline-dark", command=edit_profile)
+                                bootstyle="dark", command=edit_profile)
             b_remove = ttk.Button(popup, text="Delete",
-                                  bootstyle="outline-danger",
+                                  bootstyle="danger",
                                   command=delete_profile)
             b_new.grid(row=1, column=0, padx=5, pady=10, sticky="e")
             b_edit.grid(row=1, column=1, padx=5, pady=10)
@@ -496,11 +495,11 @@ class NetAdapProfiles:
             self.alt_dns = d_alt_dns_server.get()
             self.save_profile(popup, remove)
 
-        b_clear = ttk.Button(popup, bootstyle="outline-warning", text="Clear",
+        b_clear = ttk.Button(popup, bootstyle="warning", text="Clear",
                              width=10, command=clear_entries)
-        b_save = ttk.Button(popup, bootstyle="outline", text="Save", width=10,
+        b_save = ttk.Button(popup,  text="Save", width=10,
                             command=save_profile_data)
-        b_cancel = ttk.Button(popup, bootstyle="dark-outline",
+        b_cancel = ttk.Button(popup, bootstyle="dark",
                               text="Cancel", command=popup.destroy, width=10)
 
         b_clear.grid(row=3, column=0, padx=5, pady=(5, 25))

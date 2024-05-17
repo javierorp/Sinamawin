@@ -2,7 +2,6 @@
 
 import ctypes
 from datetime import datetime
-import json
 import os
 import re
 import threading
@@ -20,6 +19,7 @@ from network_adapters import NetworkAdapters
 from net_adap_widget import NetAdapWidget
 from net_adap_profiles import NetAdapProfiles
 from arp import arp_widget
+import preferences as pref
 
 
 APPNAME = "Sinamawin"
@@ -187,17 +187,18 @@ def check_app_folder() -> None:
         os.mkdir(appdata_path)
 
     prefdata_path = appdata_path + "\\preferences"
+    # Save the preferences path in an environment variable
+    os.environ[f"{APPNAME}_PREFERENCES"] = prefdata_path
+
     if not os.path.exists(prefdata_path):
         preferences = {
             "themename": "litera",
             "skip_vers": []
         }
-        with open(prefdata_path, "w", encoding="utf-8") as file:
-            json.dump(preferences, file, indent=4)
+        pref.save_preferences(preferences)
 
     # Save the profile path in an environment variable
     os.environ[f"{APPNAME}_PROFILES"] = f"{appdata_path}\\profiles"
-    os.environ[f"{APPNAME}_PREFERENCES"] = prefdata_path
 
     return
 
@@ -261,11 +262,8 @@ def check_app_version() -> None:
                 APP_INFO["up_to_date"] = True
                 return
 
-        with open(os.environ[f"{APPNAME}_PREFERENCES"], "r",
-                  encoding="utf-8") as fprefers:
-            preferences = json.load(fprefers)
-
         # Skip version
+        preferences = pref.get_preferences()
         if last_version in preferences["skip_vers"]:
             return
 
@@ -290,9 +288,7 @@ def check_app_version() -> None:
             try:
                 preferences["skip_vers"].append(last_version)
 
-                with open(os.environ[f"{APPNAME}_PREFERENCES"], "w",
-                          encoding="utf-8") as fprefers:
-                    json.dump(preferences, fprefers, indent=4)
+                pref.save_preferences(preferences)
             except:  # pylint: disable=bare-except # noqa
                 pass
 
@@ -451,10 +447,7 @@ if __name__ == "__main__":
 
         THEME = "litera"
         try:
-            with open(os.environ[f"{APPNAME}_PREFERENCES"], "r",
-                      encoding="utf-8") as fpref:
-                prefs = json.load(fpref)
-
+            prefs = pref.get_preferences()
             THEME = prefs["themename"]
         except:  # pylint: disable=bare-except # noqa
             pass
@@ -496,6 +489,9 @@ if __name__ == "__main__":
         editmenu.add_command(
             label="Profiles",
             command=lambda: NetAdapProfiles().manage_profiles())
+        editmenu.add_command(
+            label="Preferences",
+            command=pref.preferences_widget)
 
         # Tools menu
         toolsmenu.add_command(

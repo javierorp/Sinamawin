@@ -697,7 +697,7 @@ class NetAdapWidget:
 
         # -- Select action button --
         self._m_action = ttk.Menubutton(
-            self._labelframe, bootstyle="outline", text="Select action")
+            self._labelframe, text="Select action")
         self._m_action.menu = ttk.Menu(self._m_action)
         self._m_action["menu"] = self._m_action.menu
         self._m_action.menu.add_command(
