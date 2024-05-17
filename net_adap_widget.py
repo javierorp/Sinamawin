@@ -568,7 +568,8 @@ class NetAdapWidget:
 
         return
 
-    def create(self, frame: ttk.Frame, row: int) -> None:
+    def create(self, frame: ttk.Frame, row: int,
+               bootstyle: str = "default") -> None:
         """Create the main widget that will contain all
         the network adapter information.
 
@@ -577,12 +578,14 @@ class NetAdapWidget:
                 will be hosted.
             row (int): Row where the Labelframe will be placed
                 in the master frame.
+            bootstyle (str): ttk.Labelframe border style.
         """
         self._labelframe = ttk.Labelframe(
             frame,
             text=f"{self.name} - {self.desc}",
             relief="solid",
-            borderwidth=10)
+            borderwidth=10,
+            bootstyle=bootstyle)
 
         self._labelframe.grid(row=row, column=0, padx=10,
                               pady=10, sticky="nsew")

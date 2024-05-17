@@ -173,7 +173,8 @@ def about_popup() -> None:
 
 
 def check_app_folder() -> None:
-    """Check if the application folder/file exists and create it if necessary."""
+    """Check if the application folder/file exists and
+    create it if necessary."""
     appdata_path = os.environ.get("APPDATA")
 
     # Use the application path if there is no user path
@@ -310,6 +311,10 @@ def create_net_wd(adapters: dict) -> None:
         global NETADAPTERS_FRAME  # pylint: disable=W0602
 
         for idx, (a_idx, a_info) in enumerate(adapters.items()):
+            bootstyle = "default"
+            if "bootstyle" in a_info.keys():
+                bootstyle = a_info["bootstyle"]
+
             netframe = NetAdapWidget(
                 idx=a_idx,
                 name=a_info["name"],
@@ -327,7 +332,8 @@ def create_net_wd(adapters: dict) -> None:
             )
             netframe.create(
                 frame=NETADAPTERS_FRAME,
-                row=idx
+                row=idx,
+                bootstyle=bootstyle
             )
 
             NETFRAMES.append(netframe)
@@ -380,6 +386,16 @@ def refresh() -> None:
     """Refresh information and widgets for all network adapters."""
 
     adapters = NetworkAdapters().get_info()
+
+    # Check if a new adapter has been added
+    new_adapters = [index for index in adapters
+                    if index not in NETADAPTERS]
+
+    for index, _ in adapters.items():
+        if index in new_adapters:
+            adapters[index]["bootstyle"] = "primary"
+        else:
+            adapters[index]["bootstyle"] = "default"
 
     global NETADAPTERS  # pylint: disable=global-statement
     NETADAPTERS = adapters
