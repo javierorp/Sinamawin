@@ -8,6 +8,7 @@
 - The availability of a new version is checked and the user is informed.
 - If a new network adapter is detected when the information is refreshed, it is highlighted in a different color.
 - The application theme can now be changed.
+- It is now possible to export all network adapter information to a CSV file.
 
 ### Fixed
 
