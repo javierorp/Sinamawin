@@ -6,6 +6,7 @@ import os
 import re
 import threading
 import tkinter as tk
+from tkinter import filedialog
 import traceback
 import webbrowser
 import requests
@@ -343,6 +344,87 @@ def create_net_wd(adapters: dict) -> None:
         NOT_FOUND_TEXT.grid(row=0, column=0)
 
 
+def export_netadap2csv() -> None:
+    """Export the network adapters information to a CSV file."""
+
+    popup = ttk.Toplevel(title=f"{APPNAME} - Export to CSV",
+                         resizable=(False, False))
+
+    preferences = pref.get_preferences()
+
+    # Delimiter
+    delimiter = ";"
+    if "delimiter" in preferences:
+        delimiter = preferences["delimiter"]
+
+    l_delimiter = ttk.Label(popup, text="Delimiter:")
+    e_delimiter = ttk.Entry(popup, width=15, justify="center")
+    e_delimiter.insert(0, delimiter)
+
+    l_delimiter.grid(row=0, column=0, padx=(15, 5), pady=15)
+    e_delimiter.grid(row=0, column=1, padx=(5, 15), pady=15)
+
+    # Save button
+    def save_btn():
+        delimiter = e_delimiter.get()
+        dest_file = filedialog.asksaveasfilename(
+            title=f"{APPNAME} - Select destination folder",
+            filetypes=(("CSV", ".csv"), ("Todos los archivos", "*.*")),
+            initialfile="Sinamawin_NetAdapters.csv"
+        )
+
+        headers = ["Index", "Name", "Description", "Status",
+                   "MAC address", "IP address", "Subnet mask",
+                   "Default gateway", "Prefix Origin", "Suffix Origin",
+                   "Preferred DNS Server", "Alternate DNS Server",]
+
+        with open(dest_file, "w", encoding="utf-8") as fdest:
+            fdest.write(f"{str(delimiter)}".join(headers) + "\n")
+            for index, data in NETADAPTERS.items():
+                info = [str(index)]
+                info.append(data["name"])
+                info.append(data["desc"])
+                info.append(data["status"])
+                info.append(data["mac"])
+                info.append(data["ip"])
+                info.append(data["mask"])
+                info.append(data["gateway"])
+                info.append(data["prefix_origin"])
+                info.append(data["suffix_origin"])
+                info.append(data["pref_dns"])
+                info.append(data["alt_dns"])
+
+                fdest.write(f"{str(delimiter)}".join(info) + "\n")
+
+        preferences["delimiter"] = delimiter
+        pref.save_preferences(preferences)
+
+        toast = ToastNotification(
+            title=APPNAME,
+            message="CSV successfully exported.",
+            duration=5000,
+            icon="\u2714"
+        )
+        toast.show_toast()
+
+        popup.destroy()
+
+    b_save = ttk.Button(popup,
+                        text="Save", width=8,
+                        command=save_btn)
+
+    b_save.grid(row=1, column=1, padx=(5, 15), pady=(5, 15), sticky="e")
+
+    # Mouse wheel behavior
+    def popup_window_scroll(_):
+        """To avoid propagating the event to the main window."""
+        return "break"
+
+    popup.bind("<MouseWheel>", popup_window_scroll)
+
+    return
+
+
 def get_window_size() -> list:
     """Get the window size to be set.
 
@@ -480,6 +562,7 @@ if __name__ == "__main__":
         menubar.add_cascade(label="Help", menu=helpmenu)
 
         # File menu
+        filemenu.add_command(label="Export CSV", command=export_netadap2csv)
         filemenu.add_command(label="Refresh", command=refresh,
                              accelerator="Ctrl+R")
         filemenu.add_separator()
