@@ -369,14 +369,14 @@ def export_netadap2csv() -> None:
         delimiter = e_delimiter.get()
         dest_file = filedialog.asksaveasfilename(
             title=f"{APPNAME} - Select destination folder",
-            filetypes=(("CSV", ".csv"), ("Todos los archivos", "*.*")),
+            filetypes=(("CSV", ".csv"), ("All files", "*.*")),
             initialfile="Sinamawin_NetAdapters.csv"
         )
 
         headers = ["Index", "Name", "Description", "Status",
                    "MAC address", "IP address", "Subnet mask",
                    "Default gateway", "Prefix Origin", "Suffix Origin",
-                   "Preferred DNS Server", "Alternate DNS Server",]
+                   "Preferred DNS Server", "Alternate DNS Server"]
 
         with open(dest_file, "w", encoding="utf-8") as fdest:
             fdest.write(f"{str(delimiter)}".join(headers) + "\n")
