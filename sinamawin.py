@@ -674,3 +674,5 @@ if __name__ == "__main__":
             ("Sorry, an error occurred while trying to start the application."
              "\nPlease contact the developer (@javierorp)."),
             f"{APPNAME} - Error", 0x40 | 0x0)
+
+        webbrowser.open("https://github.com/javierorp")

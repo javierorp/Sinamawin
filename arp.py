@@ -103,6 +103,12 @@ def arp_widget(adapters: list) -> None:
         d_ip_addr.grid(row=1, column=1, padx=5, pady=5)
 
         # -- Interface --
+        def on_change_iface(*_):
+            if "Select interface" in cb_iface.get():
+                b_run.configure(state="disabled")
+            else:
+                b_run.configure(state="enabled")
+
         cb_iface_val = ["-- Select interface --"]
         for adap in adapters:
             if adap["ip"]:
@@ -115,6 +121,7 @@ def arp_widget(adapters: list) -> None:
         cb_iface.set(cb_iface_val[0])
 
         cb_iface.grid(row=1, column=2, padx=5, pady=5)
+        cb_iface.bind("<<ComboboxSelected>>", on_change_iface)
 
         # -- Run button --
         def run_btn():
@@ -122,10 +129,6 @@ def arp_widget(adapters: list) -> None:
             display it in the text box.
             """
             cb_selec = cb_iface.get()
-
-            if "Select interface" in cb_selec:
-                return
-
             ip_netap = cb_selec.split(" ")[0]
             ip_target = d_ip_addr.get()
 
@@ -145,7 +148,7 @@ def arp_widget(adapters: list) -> None:
             t_arp.delete(1.0, tk.END)
 
             if not data:
-                t_arp.insert(tk.END, "No data available")
+                t_arp.insert(tk.END, "No data available.")
                 return
 
             t_arp.insert(
@@ -167,7 +170,8 @@ def arp_widget(adapters: list) -> None:
 
         b_run = ttk.Button(popup,
                            text="Run", width=10,
-                           command=run_btn)
+                           command=run_btn,
+                           state="disabled")
         b_run.grid(row=1, column=3, padx=(5, 15), pady=5)
 
         # -- Text --

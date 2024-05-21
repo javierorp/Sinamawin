@@ -621,7 +621,6 @@ class NetworkAdapters:
         elif "ObjectNotFound" in err_dec:
             raise KeyError("Invalid network adapter index")
         elif err_dec:
-            print(err_dec)
             raise NotImplementedError(
                 "An error occurred while setting the DNS")
 
