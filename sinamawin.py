@@ -20,6 +20,7 @@ from network_adapters import NetworkAdapters
 from net_adap_widget import NetAdapWidget
 from net_adap_profiles import NetAdapProfiles
 from arp import arp_widget
+from nmap import nmap_widget
 import preferences as pref
 
 
@@ -582,6 +583,10 @@ if __name__ == "__main__":
             command=lambda: arp_widget([{
                 "ip": data["ip"], "name": data["name"]}
                 for data in NETADAPTERS.values()])
+        )
+        toolsmenu.add_command(
+            label="Nmap",
+            command=nmap_widget
         )
 
         # Help menu

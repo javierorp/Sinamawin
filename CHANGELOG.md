@@ -10,6 +10,7 @@
 - The application theme can now be changed.
 - It is now possible to export all network adapter information to a CSV file.
 - Profiles can be exported and imported.
+- Nmap can now be used to get information about active hosts.
 
 ### Fixed
 
