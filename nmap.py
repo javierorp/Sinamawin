@@ -185,7 +185,10 @@ def nmap_widget() -> None:
 
         # -- Run --
         def run_btn():
+            d_ip_addr.configure(state="readonly")
+            cb_netmask.configure(state="disabled")
             cb_prot.configure(state="disabled")
+            d_port.configure(state="readonly")
             b_run.configure(state="disabled")
 
             t_tcp.configure(state="normal")
@@ -288,7 +291,10 @@ def nmap_widget() -> None:
                     t_tcp.insert(tk.END, "Error: Failed to run Nmap.", "error")
                     t_udp.insert(tk.END, "Error: Failed to run Nmap.", "error")
                 finally:
+                    d_ip_addr.configure(state="enabled")
+                    cb_netmask.configure(state="readonly")
                     cb_prot.configure(state="readonly")
+                    d_port.configure(state="enabled")
                     b_run.configure(state="enabled")
                     t_tcp.configure(state="disabled")
                     t_udp.configure(state="disabled")
