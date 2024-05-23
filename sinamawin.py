@@ -45,7 +45,7 @@ def about_popup() -> None:
 
     # Logo
     i_logo = Image.open("./resources/sinamawin.png")
-    i_logo = i_logo.resize((70, 70))
+    i_logo = i_logo.resize((103, 80))
 
     global ABOUT_LOGO  # pylint: disable=global-statement
     ABOUT_LOGO = ImageTk.PhotoImage(i_logo)
