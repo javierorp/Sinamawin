@@ -169,7 +169,7 @@ Everyone has a different style, so the application allows you to choose the them
 
 <img width="800" src="./images/themes/themes_01.png" alt="Preferences menu">
 
-<img width="250" src="./images/themes/themes_01.png" alt="Select a new theme for the application">
+<img width="250" src="./images/themes/themes_02.png" alt="Select a new theme for the application">
 
 ## Tested screen resolutions
 
