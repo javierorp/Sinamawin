@@ -5,11 +5,13 @@ import os
 import re
 import traceback
 import tkinter as tk
+from tkinter import filedialog
 import ttkbootstrap as ttk
 from ttkbootstrap.toast import ToastNotification
 from ttkbootstrap.dialogs.dialogs import MessageDialog, Messagebox
 
 from network_adapters import NetworkAdapters
+import preferences as pref
 
 APPNAME = "Sinamawin"
 
@@ -41,6 +43,83 @@ class NetAdapProfiles:
         if self.save_profiles(profiles):
             self.toast_notification(f"Profile '{name}' successfully deleted.")
 
+    def export_profiles(self, parent: ttk.Toplevel = None) -> None:
+        """Export profiles to a CSV file.
+
+        Args:
+            parent (ttk.Toplevel, optional): Parent window. Defaults to None.
+
+        """
+
+        popup = ttk.Toplevel(title=f"{APPNAME} - Export profiles to CSV",
+                             resizable=(False, False))
+
+        profiles = self.get_profiles()
+        preferences = pref.get_preferences()
+
+        # Delimiter
+        delimiter = ";"
+        if "delimiter" in preferences:
+            delimiter = preferences["delimiter"]
+
+        l_delimiter = ttk.Label(popup, text="Delimiter:")
+        e_delimiter = ttk.Entry(popup, width=15, justify="center")
+        e_delimiter.insert(0, delimiter)
+
+        l_delimiter.grid(row=0, column=0, padx=(15, 5), pady=15)
+        e_delimiter.grid(row=0, column=1, padx=(5, 15), pady=15)
+
+        # Save button
+        def save_btn():
+            delimiter = e_delimiter.get()
+            dest_file = filedialog.asksaveasfilename(
+                title=f"{APPNAME} - Select destination folder",
+                filetypes=(("CSV", ".csv"), ("All files", "*.*")),
+                initialfile="Sinamawin_Profiles.csv"
+            )
+
+            headers = ["Name", "IP", "Subnet mask", "Default gateway",
+                       "Preferred DNS Server", "Alternate DNS Server"]
+
+            with open(dest_file, "w", encoding="utf-8") as fdest:
+                fdest.write(f"{str(delimiter)}".join(headers) + "\n")
+                for name, data in profiles.items():
+                    info = [str(name)]
+                    info.append(data["ip"])
+                    info.append(data["mask"])
+                    info.append(data["gateway"])
+                    info.append(data["pref_dns"])
+                    info.append(data["alt_dns"])
+
+                    fdest.write(f"{str(delimiter)}".join(info) + "\n")
+
+            preferences["delimiter"] = delimiter
+            pref.save_preferences(preferences)
+
+            self.toast_notification("Profiles successfully exported.")
+
+            popup.destroy()
+
+            if parent:
+                # Refresh the window
+                parent.destroy()
+                self.manage_profiles()
+
+        b_save = ttk.Button(popup,
+                            text="Save", width=8,
+                            command=save_btn)
+
+        b_save.grid(row=1, column=1, padx=(5, 15), pady=(5, 15), sticky="e")
+
+        # Mouse wheel behavior
+        def popup_window_scroll(_):
+            """To avoid propagating the event to the main window."""
+            return "break"
+
+        popup.bind("<MouseWheel>", popup_window_scroll)
+
+        return
+
     def get_profiles(self) -> dict:
         """Get profiles from the profile file.
 
@@ -54,6 +133,123 @@ class NetAdapProfiles:
                 profiles = json.load(file)
 
         return profiles
+
+    def import_profiles(self, parent: ttk.Toplevel = None) -> None:
+        """Import profiles from a CSV file. If a profile name already
+        exists, it will be saved as "name_[X]".
+
+        Args:
+            parent (ttk.Toplevel, optional): Parent window. Defaults to None.
+        """
+        src_file = filedialog.askopenfilename(
+            title=f"{APPNAME} - Import profiles from CSV",
+            filetypes=(("CSV", ".csv"), ("All files", "*.*"))
+        )
+
+        popup = ttk.Toplevel(title=f"{APPNAME} - Import profiles from CSV",
+                             resizable=(False, False))
+
+        preferences = pref.get_preferences()
+
+        # Delimiter
+        delimiter = ";"
+        if "delimiter" in preferences:
+            delimiter = preferences["delimiter"]
+
+        msg = ("The profiles will be added to the existing ones."
+               "\nIf duplicates exist, both will be maintained.")
+        l_info = ttk.Label(popup, text=msg)
+        l_info.grid(row=0, column=0, columnspan=2, padx=15, pady=15)
+
+        l_delimiter = ttk.Label(popup, text="Delimiter:")
+        e_delimiter = ttk.Entry(popup, width=15, justify="center")
+        e_delimiter.insert(0, delimiter)
+
+        l_delimiter.grid(row=1, column=0, padx=(15, 5), pady=15, sticky="e")
+        e_delimiter.grid(row=1, column=1, padx=(5, 15), pady=15, sticky="e")
+
+        # Import button
+        def import_prof():
+            try:
+                profiles = self.get_profiles()
+                delimiter = e_delimiter.get()
+                with open(src_file, "r", encoding="utf-8") as file:
+                    for line in list(file)[1:]:
+                        data = line.replace("\n", "").split(delimiter)
+                        name, ip, mask, gateway, pref_dns, alt_dns = data
+
+                        ctrl = 2
+                        aux_name = name
+                        while str(name) in profiles:
+                            name = f"{aux_name}_{ctrl}"
+                            ctrl += 1
+
+                        name = re.sub(r"[^\w\s\-]", "", name)
+                        na = NetworkAdapters()
+
+                        if not (na.validate_ipv4(ip)
+                                or na.validate_subnet_mask(mask)):
+                            raise ValueError()
+
+                        if gateway == "":
+                            gateway = "0.0.0.0"
+                        elif not na.validate_ipv4(gateway):
+                            raise ValueError()
+
+                        if pref_dns and not na.validate_ipv4(pref_dns):
+                            raise ValueError()
+
+                        if alt_dns and not na.validate_ipv4(alt_dns):
+                            raise ValueError()
+
+                        profiles[name] = {
+                            "ip": str(ip),
+                            "mask": str(mask),
+                            "gateway": str(gateway),
+                            "pref_dns": str(pref_dns),
+                            "alt_dns": str(alt_dns),
+                        }
+
+                if self.save_profiles(profiles):
+                    self.toast_notification("Profile successfully imported.")
+                else:
+                    raise NotImplementedError()
+
+            except:  # pylint: disable=bare-except # noqa
+                Messagebox.show_error(
+                    message=("The file could not be imported."
+                             "\nCheck and try again."),
+                    title=f"{APPNAME} - Error",
+                    padding=(30, 30),
+                    width=100,
+                    parent=parent)
+                popup.destroy()
+                return
+
+            preferences["delimiter"] = delimiter
+            pref.save_preferences(preferences)
+
+            popup.destroy()
+
+            if parent:
+                # Refresh the window
+                parent.destroy()
+                self.manage_profiles()
+
+        b_import = ttk.Button(popup,
+                              text="Import", width=8,
+                              command=import_prof)
+
+        b_import.grid(row=2, column=1, padx=(5, 15), pady=(5, 15), sticky="e")
+
+        # Mouse wheel behavior
+        def popup_window_scroll(_):
+            """To avoid propagating the event to the main window."""
+            return "break"
+
+        popup.bind("<MouseWheel>", popup_window_scroll)
+
+        return
 
     def manage_profiles(self, select: bool = False) -> dict:
         """Displays a window for managing profiles.
@@ -99,7 +295,7 @@ class NetAdapProfiles:
         scrollbar = ttk.Scrollbar(
             popup, bootstyle="primary-round", orient="vertical",
             command=prof_table.yview)
-        scrollbar.grid(row=0, column=4, sticky="ns", padx=(5, 10))
+        scrollbar.grid(row=0, column=5, sticky="ns", padx=(5, 10))
 
         prof_table.configure(yscrollcommand=scrollbar.set)
 
@@ -116,7 +312,7 @@ class NetAdapProfiles:
                                       data["alt_dns"]
                                       ))
 
-        prof_table.grid(row=0, column=0, columnspan=3, sticky="nsew")
+        prof_table.grid(row=0, column=0, columnspan=5, sticky="nsew")
 
         # Functions that provide utility to the buttons
         def get_selected_row(show_error: bool = True) -> str:
@@ -232,26 +428,33 @@ class NetAdapProfiles:
 
         # Buttons
         if select:  # "Select" and "Select & Apply"
-            b_select = ttk.Button(popup, text="Select", bootstyle="outline",
+            b_select = ttk.Button(popup, text="Select",
                                   command=select_apply_profile)
             b_sel_apply = ttk.Button(
                 popup, text="Select & Apply",
-                bootstyle="outline",
                 command=lambda: select_apply_profile(True))
             b_select.grid(row=1, column=1, padx=5, pady=10)
             b_sel_apply.grid(row=1, column=2, padx=5, pady=10)
 
         else:  # "New", "Edit" and "Delete"
-            b_new = ttk.Button(popup, text="New", bootstyle="outline",
+            b_export = ttk.Button(popup, text="Export",
+                                  bootstyle="secondary",
+                                  command=lambda: self.export_profiles(popup))
+            b_import = ttk.Button(popup, text="Import",
+                                  bootstyle="secondary",
+                                  command=lambda: self.import_profiles(popup))
+            b_new = ttk.Button(popup, text="New",
                                command=new_profile)
             b_edit = ttk.Button(popup, text="Edit",
-                                bootstyle="outline-dark", command=edit_profile)
+                                bootstyle="dark", command=edit_profile)
             b_remove = ttk.Button(popup, text="Delete",
-                                  bootstyle="outline-danger",
+                                  bootstyle="danger",
                                   command=delete_profile)
-            b_new.grid(row=1, column=0, padx=5, pady=10, sticky="e")
-            b_edit.grid(row=1, column=1, padx=5, pady=10)
-            b_remove.grid(row=1, column=2, padx=5, pady=10)
+            b_export.grid(row=1, column=0, padx=5, pady=10, sticky="e")
+            b_import.grid(row=1, column=1, padx=5, pady=10)
+            b_new.grid(row=1, column=2, padx=5, pady=10)
+            b_edit.grid(row=1, column=3, padx=5, pady=10)
+            b_remove.grid(row=1, column=4, padx=5, pady=10)
 
         # Adjust size of columns to window size
         popup.grid_columnconfigure(0, weight=1)
@@ -496,11 +699,11 @@ class NetAdapProfiles:
             self.alt_dns = d_alt_dns_server.get()
             self.save_profile(popup, remove)
 
-        b_clear = ttk.Button(popup, bootstyle="outline-warning", text="Clear",
+        b_clear = ttk.Button(popup, bootstyle="warning", text="Clear",
                              width=10, command=clear_entries)
-        b_save = ttk.Button(popup, bootstyle="outline", text="Save", width=10,
+        b_save = ttk.Button(popup,  text="Save", width=10,
                             command=save_profile_data)
-        b_cancel = ttk.Button(popup, bootstyle="dark-outline",
+        b_cancel = ttk.Button(popup, bootstyle="dark",
                               text="Cancel", command=popup.destroy, width=10)
 
         b_clear.grid(row=3, column=0, padx=5, pady=(5, 25))

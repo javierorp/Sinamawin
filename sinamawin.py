@@ -1,24 +1,36 @@
 """Sinamawin - Simple Network Adapter Manager for Windows"""
 
 import ctypes
+from datetime import datetime
 import os
+import re
+import threading
 import tkinter as tk
+from tkinter import filedialog
 import traceback
 import webbrowser
+import requests
 import ttkbootstrap as ttk
 from ttkbootstrap.toast import ToastNotification
+from ttkbootstrap.dialogs.dialogs import MessageDialog
 from PIL import Image, ImageTk
+from packaging.version import Version
 
 from network_adapters import NetworkAdapters
 from net_adap_widget import NetAdapWidget
 from net_adap_profiles import NetAdapProfiles
+from arp import arp_widget
+from nmap import nmap_widget
+import preferences as pref
 
 
 APPNAME = "Sinamawin"
+APP_INFO = None
 ICON = "./resources/sinamawin.ico"  # App icon
 ABOUT_LOGO = ""  # App logo in About window
 ADMIN = False  # Privileges
 MAIN_FRAME = None  # Frame containing the network adapters and the scrollbar
+NETADAPTERS = None  # Network adapters
 NETADAPTERS_FRAME = None  # Frame containing all the frames
 # of the network adapters
 NETFRAMES = []  # Frames of all network adapters
@@ -33,7 +45,7 @@ def about_popup() -> None:
 
     # Logo
     i_logo = Image.open("./resources/sinamawin.png")
-    i_logo = i_logo.resize((70, 70))
+    i_logo = i_logo.resize((103, 80))
 
     global ABOUT_LOGO  # pylint: disable=global-statement
     ABOUT_LOGO = ImageTk.PhotoImage(i_logo)
@@ -41,7 +53,19 @@ def about_popup() -> None:
     l_logo.grid(row=0, column=0, padx=(50, 10), pady=10, rowspan=2, sticky="w")
 
     # App name
-    l_app = ttk.Label(popup, text=APPNAME,
+    appname_txt = APPNAME
+    if APP_INFO:
+        appname_txt = (f"{APPNAME} (v{APP_INFO['version']}"
+                       f"{'*' if not APP_INFO['up_to_date'] else ''}")
+
+        if APP_INFO["version_date"]:
+            ver_date = datetime.strptime(
+                APP_INFO["version_date"], "%Y-%m-%dT%H:%M:%SZ")
+            appname_txt = appname_txt + f" - {ver_date.strftime('%b %Y')}"
+
+        appname_txt = appname_txt + ")"
+
+    l_app = ttk.Label(popup, text=appname_txt,
                       font=("Arial", 14, "bold"))
     l_app.grid(row=0, column=0, padx=10, pady=(10, 0))
 
@@ -50,9 +74,11 @@ def about_popup() -> None:
         font=("Arial", 12))
     l_app_desc.grid(row=1, column=0, padx=10, pady=5)
 
-    t_lic = tk.Text(popup, wrap="word", height=15,
+    t_lic = tk.Text(popup, wrap="word", height=16,
                     relief="flat", font=("Arial", 11))
     t_lic.grid(row=2, column=0, padx=10, pady=10)
+
+    t_lic.tag_configure("bold", font=("Arial", 11, "bold"))
 
     # Dev and GitHub
     t_lic.insert(tk.END, "This application has been developed by ")
@@ -121,13 +147,36 @@ def about_popup() -> None:
     t_lic.tag_bind("freepik", "<Button-1>", lambda e: webbrowser.open(
         "https://www.freepik.com"))
 
+    if APP_INFO and not APP_INFO["up_to_date"]:
+        t_lic.insert(tk.END, "\n *Download the latest version ", "bold")
+        t_lic.tag_configure("last_version", foreground="blue",
+                            font=("Arial", 11, "bold"))
+        last_ver_date = datetime.strptime(
+            APP_INFO["last_version_date"], "%Y-%m-%dT%H:%M:%SZ")
+        t_lic.insert(
+            tk.END,
+            f"{APP_INFO['last_version']} ({last_ver_date.strftime('%b %Y')})",
+            "last_version")
+        t_lic.insert(tk.END, ".\n")
+
+        t_lic.tag_bind("last_version", "<Button-1>", lambda e: webbrowser.open(
+            APP_INFO["url"]))
+
     t_lic.configure(state="disabled")
+
+    # Mouse wheel behavior
+    def popup_window_scroll(_):
+        """To avoid propagating the event to the main window."""
+        return "break"
+
+    popup.bind("<MouseWheel>", popup_window_scroll)
 
     return
 
 
 def check_app_folder() -> None:
-    """Check if the application folder exists and create it if necessary."""
+    """Check if the application folder/file exists and
+    create it if necessary."""
     appdata_path = os.environ.get("APPDATA")
 
     # Use the application path if there is no user path
@@ -139,10 +188,114 @@ def check_app_folder() -> None:
     if not os.path.exists(appdata_path):
         os.mkdir(appdata_path)
 
+    prefdata_path = appdata_path + "\\preferences"
+    # Save the preferences path in an environment variable
+    os.environ[f"{APPNAME}_PREFERENCES"] = prefdata_path
+
+    if not os.path.exists(prefdata_path):
+        preferences = {
+            "themename": "litera",
+            "skip_vers": []
+        }
+        pref.save_preferences(preferences)
+
     # Save the profile path in an environment variable
     os.environ[f"{APPNAME}_PROFILES"] = f"{appdata_path}\\profiles"
 
     return
+
+
+def check_app_version() -> None:
+    """Check if a new version is available."""
+    try:
+        version = ""
+        last_version = ""
+        last_version_date = ""
+
+        # App version
+        with open("setup.py", "r", encoding="utf-8") as f:
+            content = f.read()
+            version_match = re.search(r"version=['\"]([^'\"]*)['\"]", content)
+            if version_match:
+                version = version_match.group(1)
+            else:
+                return
+
+        # Last version
+        url = ("https://api.github.com/repos/javierorp/"
+               "Sinamawin/releases/latest")
+        req = requests.get(url, timeout=30)
+        if req.status_code == 200:
+            data = req.json()
+            last_version = data["tag_name"]
+            last_version_date = data["published_at"]
+        else:
+            return
+
+        url_last_ver = ("https://github.com/javierorp/"
+                        f"Sinamawin/releases/tag/{last_version}")
+
+        global APP_INFO  # pylint: disable=global-statement
+        APP_INFO = {
+            "url": url_last_ver,
+            "version": version,
+            "version_date": "",
+            "last_version": last_version,
+            "last_version_date": last_version_date,
+            "up_to_date": False
+        }
+
+        if Version(version) == Version(last_version):
+            APP_INFO["up_to_date"] = True
+            APP_INFO["version_date"] = last_version_date
+            return
+        else:
+            url = "https://api.github.com/repos/javierorp/Sinamawin/releases"
+            req = requests.get(url, timeout=30)
+
+            if req.status_code == 200:
+                releases = req.json()
+
+                for release in releases:
+                    if release["tag_name"] == version:
+                        APP_INFO["version_date"] = release["published_at"]
+
+            if Version(version) >= Version(last_version):
+                APP_INFO["up_to_date"] = True
+                return
+
+        # Skip version
+        preferences = pref.get_preferences()
+        if last_version in preferences["skip_vers"]:
+            return
+
+        # Show "New version" modal
+        title = f"{APPNAME} - New version"
+        last_ver_datetime = datetime.strptime(
+            last_version_date, "%Y-%m-%dT%H:%M:%SZ")
+        msg = (f"New version available: {last_version}"
+               f" ({last_ver_datetime.strftime('%b %Y')})")
+        dialog = MessageDialog(message=msg,
+                               title=title,
+                               buttons=["Download", "Skip", "Cancel"],
+                               padding=(30, 30),
+                               width=100,
+                               alert=True)
+
+        dialog.show()
+
+        if dialog.result == "Download":
+            webbrowser.open(url_last_ver)
+        elif dialog.result == "Skip":
+            try:
+                preferences["skip_vers"].append(last_version)
+
+                pref.save_preferences(preferences)
+            except:  # pylint: disable=bare-except # noqa
+                pass
+
+    except:  # pylint: disable=bare-except # noqa
+        pass
 
 
 def create_net_wd(adapters: dict) -> None:
@@ -156,6 +309,10 @@ def create_net_wd(adapters: dict) -> None:
         global NETADAPTERS_FRAME  # pylint: disable=W0602
 
         for idx, (a_idx, a_info) in enumerate(adapters.items()):
+            bootstyle = "default"
+            if "bootstyle" in a_info.keys():
+                bootstyle = a_info["bootstyle"]
+
             netframe = NetAdapWidget(
                 idx=a_idx,
                 name=a_info["name"],
@@ -173,7 +330,8 @@ def create_net_wd(adapters: dict) -> None:
             )
             netframe.create(
                 frame=NETADAPTERS_FRAME,
-                row=idx
+                row=idx,
+                bootstyle=bootstyle
             )
 
             NETFRAMES.append(netframe)
@@ -185,6 +343,87 @@ def create_net_wd(adapters: dict) -> None:
             MAIN_FRAME, text="No network adapter was found on the computer",
             font=("Arial", 12))
         NOT_FOUND_TEXT.grid(row=0, column=0)
+
+
+def export_netadap2csv() -> None:
+    """Export the network adapters information to a CSV file."""
+
+    popup = ttk.Toplevel(title=f"{APPNAME} - Export to CSV",
+                         resizable=(False, False))
+
+    preferences = pref.get_preferences()
+
+    # Delimiter
+    delimiter = ";"
+    if "delimiter" in preferences:
+        delimiter = preferences["delimiter"]
+
+    l_delimiter = ttk.Label(popup, text="Delimiter:")
+    e_delimiter = ttk.Entry(popup, width=15, justify="center")
+    e_delimiter.insert(0, delimiter)
+
+    l_delimiter.grid(row=0, column=0, padx=(15, 5), pady=15)
+    e_delimiter.grid(row=0, column=1, padx=(5, 15), pady=15)
+
+    # Save button
+    def save_btn():
+        delimiter = e_delimiter.get()
+        dest_file = filedialog.asksaveasfilename(
+            title=f"{APPNAME} - Select destination folder",
+            filetypes=(("CSV", ".csv"), ("All files", "*.*")),
+            initialfile="Sinamawin_NetAdapters.csv"
+        )
+
+        headers = ["Index", "Name", "Description", "Status",
+                   "MAC address", "IP address", "Subnet mask",
+                   "Default gateway", "Prefix Origin", "Suffix Origin",
+                   "Preferred DNS Server", "Alternate DNS Server"]
+
+        with open(dest_file, "w", encoding="utf-8") as fdest:
+            fdest.write(f"{str(delimiter)}".join(headers) + "\n")
+            for index, data in NETADAPTERS.items():
+                info = [str(index)]
+                info.append(data["name"])
+                info.append(data["desc"])
+                info.append(data["status"])
+                info.append(data["mac"])
+                info.append(data["ip"])
+                info.append(data["mask"])
+                info.append(data["gateway"])
+                info.append(data["prefix_origin"])
+                info.append(data["suffix_origin"])
+                info.append(data["pref_dns"])
+                info.append(data["alt_dns"])
+
+                fdest.write(f"{str(delimiter)}".join(info) + "\n")
+
+        preferences["delimiter"] = delimiter
+        pref.save_preferences(preferences)
+
+        toast = ToastNotification(
+            title=APPNAME,
+            message="CSV successfully exported.",
+            duration=5000,
+            icon="\u2714"
+        )
+        toast.show_toast()
+
+        popup.destroy()
+
+    b_save = ttk.Button(popup,
+                        text="Save", width=8,
+                        command=save_btn)
+
+    b_save.grid(row=1, column=1, padx=(5, 15), pady=(5, 15), sticky="e")
+
+    # Mouse wheel behavior
+    def popup_window_scroll(_):
+        """To avoid propagating the event to the main window."""
+        return "break"
+
+    popup.bind("<MouseWheel>", popup_window_scroll)
+
+    return
 
 
 def get_window_size() -> list:
@@ -227,6 +466,19 @@ def refresh() -> None:
 
     adapters = NetworkAdapters().get_info()
 
+    # Check if a new adapter has been added
+    new_adapters = [index for index in adapters
+                    if index not in NETADAPTERS]
+
+    for index, _ in adapters.items():
+        if index in new_adapters:
+            adapters[index]["bootstyle"] = "primary"
+        else:
+            adapters[index]["bootstyle"] = "default"
+
+    global NETADAPTERS  # pylint: disable=global-statement
+    NETADAPTERS = adapters
+
     global NETFRAMES  # pylint: disable=global-statement
 
     if isinstance(NETFRAMES, list):
@@ -260,6 +512,7 @@ if __name__ == "__main__":
 
         # Get network adapter info
         net_adapters = NetworkAdapters().get_info()
+        NETADAPTERS = net_adapters
 
         # To know if the application has been launched as administrator.
         try:
@@ -270,13 +523,20 @@ if __name__ == "__main__":
 
         # Assign an ID to display the icon in the taskbar on Windows
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-            "Sinamawin")
+            APPNAME)
 
         WIDTH, HEIGHT = get_window_size()
         ADJ_HEIGHT = 1.06 if ADMIN else 1.11
 
-        app = ttk.Window(title="Sinamawin" + (" [Admin]" if ADMIN else ""),
-                         themename="litera",
+        THEME = "litera"
+        try:
+            prefs = pref.get_preferences()
+            THEME = prefs["themename"]
+        except:  # pylint: disable=bare-except # noqa
+            pass
+
+        app = ttk.Window(title=APPNAME + (" [Admin]" if ADMIN else ""),
+                         themename=THEME,
                          size=(int(WIDTH*1.025), int(HEIGHT*ADJ_HEIGHT)))
         app.resizable(False, False)
 
@@ -285,19 +545,25 @@ if __name__ == "__main__":
         app.iconbitmap(default=ICON)  # Set the default bitmap (.ico)
         app.iconbitmap(default='')  # Remove the default bitmap
 
+        # App version
+        threading.Thread(target=check_app_version).start()
+
         # Menu bar
         menubar = tk.Menu(app)
         app.config(menu=menubar)
 
         filemenu = tk.Menu(menubar)
         editmenu = tk.Menu(menubar)
+        toolsmenu = tk.Menu(menubar)
         helpmenu = tk.Menu(menubar)
 
         menubar.add_cascade(label="File", menu=filemenu)
         menubar.add_cascade(label="Edit", menu=editmenu)
+        menubar.add_cascade(label="Tools", menu=toolsmenu)
         menubar.add_cascade(label="Help", menu=helpmenu)
 
         # File menu
+        filemenu.add_command(label="Export CSV", command=export_netadap2csv)
         filemenu.add_command(label="Refresh", command=refresh,
                              accelerator="Ctrl+R")
         filemenu.add_separator()
@@ -307,11 +573,24 @@ if __name__ == "__main__":
         editmenu.add_command(
             label="Profiles",
             command=lambda: NetAdapProfiles().manage_profiles())
+        editmenu.add_command(
+            label="Preferences",
+            command=pref.preferences_widget)
+
+        # Tools menu
+        toolsmenu.add_command(
+            label="ARP",
+            command=lambda: arp_widget([{
+                "ip": data["ip"], "name": data["name"]}
+                for data in NETADAPTERS.values()])
+        )
+        toolsmenu.add_command(
+            label="Nmap",
+            command=nmap_widget
+        )
 
         # Help menu
         helpmenu.add_command(label="About", command=about_popup)
-        helpmenu.add_command(label="Releases", command=lambda: webbrowser.open(
-            "https://github.com/javierorp/Sinamawin/releases"))
 
         # Config menu
         app.config(menu=menubar)
@@ -387,11 +666,13 @@ if __name__ == "__main__":
     except Exception as e:  # pylint: disable=broad-exception-caught # noqa
         traceback.print_exc()
         with open(f"{APPNAME.lower()}_error.log", mode="w",
-                  encoding="utf-8") as file:
-            traceback.print_exc(file=file)
+                  encoding="utf-8") as flog:
+            traceback.print_exc(file=flog)
 
         ctypes.windll.user32.MessageBoxW(
             0,
             ("Sorry, an error occurred while trying to start the application."
              "\nPlease contact the developer (@javierorp)."),
             f"{APPNAME} - Error", 0x40 | 0x0)
+
+        webbrowser.open("https://github.com/javierorp")

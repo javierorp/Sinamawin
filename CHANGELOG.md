@@ -1,5 +1,23 @@
 # Sinamawin - Changelog
 
+## 1.0.0 (May 2024)
+
+### Added
+
+- New application icon.
+- New module (Tools->ARP) to find out the MAC addresses of the network adapter to which it is connected.
+- The availability of a new version is checked and the user is informed.
+- If a new network adapter is detected when the information is refreshed, it is highlighted in a different color.
+- The application theme can now be changed.
+- It is now possible to export all network adapter information to a CSV file.
+- Profiles can be exported and imported.
+- Nmap (Tools->Nmap) can now be used to get information about active hosts.
+
+### Fixed
+
+- (Issue #4) When more than one IP was assigned to an interface, the "Manual" did not prevail.
+- The network adapters were not getting updated in the ARP module.
+
 ## 0.2.0 (May 2024)
 
 ### Added
