@@ -11,7 +11,7 @@ A quick and easy way **to manage network adapters** in Windows (only **IPv4**).
 
 If you detect any error, have any doubt, suggestion or want to contact me you can do it via:
 
-[<img src="./images/linkedin_logo.png" width="20" height="20" alt="LinkedIn logo">](https://es.linkedin.com/in/javierortipriego) &ensp; [<img src="./images/github_logo.png" width="20" height="20" alt="GitHub logo">](https://github.com/javierorp) &ensp; [<img src="./images/outlook_logo.png" width="20" height="20" alt="Outlook logo">](mailto:javierorp@outlook.com)
+[<img src="./images/linkedin_logo.png" width="20" height="20" alt="LinkedIn logo">](https://es.linkedin.com/in/javierortipriego) &ensp; [<img src="./images/github_logo.png" width="20" height="20" alt="GitHub logo">](https://github.com/javierorp) &ensp; [<img src="./images/outlook_logo.png" width="20" height="20" alt="Outlook logo">](mailto:javierorp@proton.me)
 
 ## Table of Contents
 
@@ -173,7 +173,7 @@ Everyone has a different style, so the application allows you to choose the them
 
 ## Tested screen resolutions
 
-The application has been tested and adapted for these screen resolutions. If your screen does not display correctly, please [contact me](mailto:javierorp@outlook.com) to try to solve it.
+The application has been tested and adapted for these screen resolutions. If your screen does not display correctly, please [contact me](mailto:javierorp@proton.me) to try to solve it.
 
 |              |              |              |              |
 | ------------ | ------------ | ------------ | ------------ |
